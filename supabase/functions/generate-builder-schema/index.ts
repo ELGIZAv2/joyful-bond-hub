@@ -42,6 +42,14 @@ function buildSystem(fileType: FileType, userLanguage?: string): string {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const authUser = await getAuthUser(req);
+  if (!authUser) {
+    return new Response(JSON.stringify({ success: false, error: "unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+
   try {
     const body = await req.json().catch(() => ({}));
     const fileType = body.fileType as FileType;
