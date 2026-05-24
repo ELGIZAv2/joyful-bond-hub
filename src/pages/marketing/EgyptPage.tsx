@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
+import SEOHead from "@/components/common/SEOHead";
 
 const megaProjects = [
   {
