@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import GlowButton from "@/components/branding/GlowButton";
 import { goBackOr } from "@/lib/navigation";
 import { WORKSPACE_PRODUCT_MAP } from "@/lib/workspacePlans";
+import SEOHead from "@/components/common/SEOHead";
 
 type PlanTier = "starter" | "pro" | "elite" | "business";
 
@@ -244,6 +245,11 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background text-foreground">
+      <SEOHead
+        title="Pricing — Megsy AI Plans & Credits"
+        description="Simple plans for Megsy AI. Pay-as-you-go credits or monthly subscriptions for chat, images, video, slides and full-stack builds."
+        path="/pricing"
+      />
       {/* Bubble + utility CSS scoped to page */}
       <style>{`
         @keyframes pricing-bubble-rise {
