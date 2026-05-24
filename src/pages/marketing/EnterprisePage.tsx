@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, Shield, Zap, Users, Server, Headphones, Lock, Building2, Star, BarChart3, FileText, Clock, Gem, Crown, Rocket, Globe } from "lucide-react";
+import { Send, Shield, Zap, Users, Server, Headphones, Lock, BarChart3, Clock, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
-import heroTeam from "@/assets/about-team-working.jpg";
 
 
 const companySizes = ["1-10", "11-50", "51-200", "201-500", "500+"];
@@ -25,21 +24,15 @@ const needs = [
 ];
 
 const features = [
-  { icon: Gem, title: "Custom MC Allocation", desc: "Tailored credit allocation based on your organization's unique needs." },
-  { icon: Zap, title: "Priority Speed Access", desc: "Maximum speed across all AI models with dedicated GPU allocation." },
-  { icon: Server, title: "Dedicated Infrastructure", desc: "Isolated compute resources with guaranteed uptime and performance." },
-  { icon: Shield, title: "SLA Guarantees", desc: "Contractual uptime and performance guarantees for mission-critical operations." },
-  { icon: Rocket, title: "Custom API & Integrations", desc: "Seamless integration with your existing systems and workflows." },
-  { icon: Lock, title: "Enterprise Security", desc: "SOC2-ready, GDPR compliance, and advanced encryption standards." },
-  { icon: Globe, title: "Data Privacy & Compliance", desc: "Full data sovereignty with regulatory compliance for your industry." },
-  { icon: Star, title: "Early Access to New Models", desc: "Be the first to test and deploy cutting-edge AI models." },
-  { icon: BarChart3, title: "Advanced Analytics", desc: "Detailed usage analytics and reporting for your entire team." },
-  { icon: Users, title: "Dedicated Account Manager", desc: "A personal point of contact to ensure your success." },
-  { icon: Headphones, title: "24/7 Priority Support", desc: "Round-the-clock support with guaranteed response times." },
-  { icon: Clock, title: "Priority Onboarding", desc: "Fast-track team onboarding with personalized training sessions." },
-  { icon: FileText, title: "Monthly Business Reviews", desc: "Regular strategic reviews to optimize your AI usage." },
-  { icon: Crown, title: "Volume Discounts", desc: "Exclusive pricing for high-volume enterprise needs." },
-  { icon: Building2, title: "Custom Contract & Billing", desc: "Flexible contracts and invoicing to match your finance systems." },
+  { icon: Zap, title: "Custom credit allocation", desc: "A monthly MC volume sized to your real usage, with one consolidated invoice." },
+  { icon: Users, title: "Team workspaces", desc: "Shared seats with central billing and per-member usage visibility." },
+  { icon: Headphones, title: "Priority support channel", desc: "A direct line to the founders for setup, escalations and product feedback." },
+  { icon: Server, title: "Higher rate limits", desc: "Raised concurrent generation and API limits sized for production workloads." },
+  { icon: Globe, title: "Data residency on request", desc: "We can discuss regional deployment options depending on your jurisdiction." },
+  { icon: Lock, title: "Custom data agreements", desc: "DPA, custom retention windows and on-request training opt-outs on every plan." },
+  { icon: BarChart3, title: "Usage reporting", desc: "Monthly usage breakdowns per team, per feature and per workspace." },
+  { icon: Clock, title: "Onboarding session", desc: "A live session to set up your workspace, train your team and answer questions." },
+  { icon: Shield, title: "Contract & invoicing", desc: "Annual contracts, custom payment terms, PO support and tax-compliant invoicing." },
 ];
 
 const EnterpriseFormSection = () => {

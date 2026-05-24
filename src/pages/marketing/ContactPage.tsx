@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
-import heroTeam from "@/assets/about-team-working.jpg";
 
 const supportSchema = z.object({
   username: z.string().trim().min(1, "Username is required").max(100),
@@ -85,34 +84,34 @@ const ContactPage = () => {
       />
       <LandingNavbar />
 
-      {/* HERO */}
-      <section className="relative w-full overflow-hidden pt-20">
-        <div className="relative mx-auto max-w-7xl px-3 md:px-6">
-          <div className="relative h-[40vh] min-h-[280px] w-full overflow-hidden rounded-3xl md:h-[55vh] md:min-h-[420px]">
-            <img
-              src={heroTeam}
-              alt=""
-              loading="eager"
-              fetchPriority="high"
-              width={1920}
-              height={1080}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/20" />
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9 }}
-              className="absolute inset-x-0 bottom-0 px-6 pb-10 md:pb-14"
-            >
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/70">
-                Contact
-              </p>
-              <h1 className="font-display text-[12vw] font-black uppercase leading-[0.9] tracking-tighter text-white drop-shadow-2xl md:text-[6.5vw]">
-                Reach out to our team.
-              </h1>
-            </motion.div>
-          </div>
+      {/* HERO — landing style */}
+      <section className="relative overflow-hidden bg-background pb-12 pt-32 text-center md:pt-44">
+        <div className="mx-auto w-full max-w-4xl px-4">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+          >
+            Contact
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="font-display text-[9vw] uppercase leading-[0.95] tracking-tight text-foreground md:text-[5.5vw]"
+          >
+            Talk to{" "}
+            <span className="text-primary">a real human.</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mx-auto mt-4 max-w-xl text-[13px] leading-snug text-muted-foreground md:mt-6 md:text-lg"
+          >
+            Pick the form that fits — we read every message and reply ourselves.
+          </motion.p>
         </div>
       </section>
 
