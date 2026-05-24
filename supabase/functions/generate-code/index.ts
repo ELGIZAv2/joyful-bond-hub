@@ -39,17 +39,17 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-async function getUserId(req: Request, fallback?: string): Promise<string | null> {
+async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization");
-  if (auth?.startsWith("Bearer ")) {
-    const token = auth.slice(7);
-    try {
-      const admin = adminClient();
-      const { data } = await admin.auth.getUser(token);
-      if (data?.user?.id) return data.user.id;
-    } catch {/* ignore */}
+  if (!auth?.startsWith("Bearer ")) return null;
+  const token = auth.slice(7);
+  try {
+    const admin = adminClient();
+    const { data } = await admin.auth.getUser(token);
+    return data?.user?.id ?? null;
+  } catch {
+    return null;
   }
-  return fallback ?? null;
 }
 
 Deno.serve(async (req) => {
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Provide prompt or messages" }, 400);
   }
 
-  const userId = await getUserId(req, body.user_id);
+  const userId = await getUserId(req);
   if (!userId) return jsonResponse({ error: "Unauthorized" }, 401);
 
   const apiKey = Deno.env.get("V0_API_KEY");

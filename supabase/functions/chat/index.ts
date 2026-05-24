@@ -599,7 +599,7 @@ serve(async (req) => {
         auth: { persistSession: false, autoRefreshToken: false },
       });
       const { data: userData } = await userClient.auth.getUser();
-      const userId = userData?.user?.id || parsedBody?.user_id;
+      const userId = userData?.user?.id; // never trust body.user_id
       if (!userId) {
         return new Response(JSON.stringify({ error: "auth_required" }), {
           status: 401,
