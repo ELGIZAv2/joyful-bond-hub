@@ -128,6 +128,18 @@ const ImageStudioPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Consume handoff state from MediaHub
+  useEffect(() => {
+    const s = (location.state as any) || {};
+    if (s.prompt) setInput(s.prompt);
+    if (s.attachedImage) setAttachedImages([s.attachedImage]);
+    if (s.prompt || s.attachedImage || s.modelSlug) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
