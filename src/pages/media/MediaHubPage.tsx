@@ -931,12 +931,26 @@ const MediaHubPage = () => {
                                 {rows.map((r) => (
                                   <button
                                     key={r.key}
-                                    onClick={() => setSettingsSub(r.key)}
-                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-accent transition-colors"
+                                    onClick={() => {
+                                      if (r.key === "model") {
+                                        setSettingsOpen(false);
+                                        setModelPickerOpen(true);
+                                      } else {
+                                        setSettingsSub(r.key as any);
+                                      }
+                                    }}
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-accent transition-colors ${r.key === "model" ? "bg-foreground/[0.04]" : ""}`}
                                   >
                                     <span className="font-medium">{r.label}</span>
                                     <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                                      {r.value && <span className="truncate max-w-[110px]">{r.value}</span>}
+                                      {r.key === "model" && currentModel && (
+                                        <span className="text-[10px] font-bold text-indigo-300 tabular-nums">
+                                          {mode === "image"
+                                            ? `${(currentModel as any).credits} MC`
+                                            : `${(currentModel as any).credits_per_second ?? (currentModel as any).credits_per_video} MC`}
+                                        </span>
+                                      )}
+                                      {r.value && <span className="truncate max-w-[140px]">{r.value}</span>}
                                       <ChevronRightIcon className="w-3.5 h-3.5" />
                                     </span>
                                   </button>
