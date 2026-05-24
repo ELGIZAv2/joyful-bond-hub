@@ -5,7 +5,7 @@ type InvokeOptions = Parameters<typeof supabase.functions.invoke>[1];
 const transientError = (message: string) =>
   /failed to send|network|fetch|timeout|edge function/i.test(message);
 
-export async function invokeFunction<T = any>(name: string, options?: InvokeOptions, retries = 1) {
+export async function invokeFunction<T = any>(name: string, options?: InvokeOptions, retries = 1): Promise<{ data: T; error: Error | null }> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -18,5 +18,5 @@ export async function invokeFunction<T = any>(name: string, options?: InvokeOpti
     await new Promise((resolve) => setTimeout(resolve, 450 * (attempt + 1)));
   }
 
-  return { data: null as T | null, error: lastError as Error };
+  return { data: null as T, error: lastError as Error };
 }
