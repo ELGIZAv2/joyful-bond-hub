@@ -23,6 +23,20 @@ type VideoProps = {
   onSelect: (m: FalVideoModel) => void;
 };
 
+export function FalModelPickerSheet(props: ImageProps | VideoProps) {
+  const img = useFalImageModels();
+  const vid = useFalVideoModels();
+  const models = props.kind === "image" ? img.models : vid.models;
+
+  const sorted = useMemo(() => {
+    return [...(models as any[])].sort((a, b) => {
+      const af = a.is_featured ? 0 : 1;
+      const bf = b.is_featured ? 0 : 1;
+      if (af !== bf) return af - bf;
+      return a.sort_order - b.sort_order;
+    });
+  }, [models]);
+
   return (
     <AnimatePresence>
       {props.open && (
@@ -81,31 +95,6 @@ type VideoProps = {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      {/* Thumbnail */}
-                      <div className="relative shrink-0">
-                        <div
-                          className={`w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center text-[11px] font-black text-white/90 shadow-md ${
-                            selected ? "ring-2 ring-primary/40" : "ring-1 ring-border/40"
-                          }`}
-                          style={
-                            m.thumbnail_url
-                              ? undefined
-                              : { background: gradFor(m.slug) }
-                          }
-                        >
-                          {m.thumbnail_url ? (
-                            <img src={m.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{initials(m.display_name)}</span>
-                          )}
-                        </div>
-                        {selected && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full border-2 border-card flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={4} />
-                          </div>
-                        )}
-                      </div>
-
                       {/* Body */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
