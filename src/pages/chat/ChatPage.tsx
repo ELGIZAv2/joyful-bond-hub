@@ -3429,6 +3429,7 @@ Ask me anything to get started!`;
 
   return (
     <>
+      <SEOHead title="Chat" description="Chat with 80+ AI models in one place — GPT, Claude, Gemini, Grok, Llama and more. Stream answers, run deep research, and continue conversations across devices." path="/chat" noindex />
       {/* Megsy Operator now renders as a tiny inline pill above the input — see below. */}
       <div className="h-[100dvh] flex bg-background overflow-hidden">
         {/* Desktop persistent sidebar */}

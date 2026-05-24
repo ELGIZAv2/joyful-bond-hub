@@ -472,7 +472,16 @@ const MediaHubPage = () => {
 
   const [sidebarCollapsed] = useSidebarCollapsed();
 
+  const seoTitle = mode === "image" ? "Image Hub" : mode === "video" ? "Video Hub" : "Media Hub";
+  const seoDesc = mode === "image"
+    ? "Generate, edit and organize AI images. Browse community showcases and jump into the Image Studio."
+    : mode === "video"
+    ? "Generate AI videos, browse cinematic showcases and launch the Video Studio."
+    : "All your AI-generated images and videos in one hub — generate, browse and manage media.";
+  const seoPath = mode === "image" ? "/images" : mode === "video" ? "/videos" : "/media";
   return (
+    <>
+    <SEOHead title={seoTitle} description={seoDesc} path={seoPath} noindex />
     <div className="h-[100dvh] flex bg-background overflow-hidden">
       {/* Desktop persistent sidebar — same as chat */}
       <aside
