@@ -260,7 +260,7 @@ const AuthPage = () => {
     if (!newPassword || newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("update-password", { body: { email: email.trim().toLowerCase(), password: newPassword, code: verifiedResetCode } });
+      const { data, error } = await invokeFunction("update-password", { body: { email: email.trim().toLowerCase(), password: newPassword, code: verifiedResetCode } });
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Failed to update password");
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
