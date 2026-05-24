@@ -12,20 +12,20 @@ export interface WorkspacePlanOption {
 
 export const WORKSPACE_PRODUCT_MAP: Record<WorkspacePaidPlan, { monthly: string; yearly: string }> = {
   starter: {
-    monthly: "c3483e63-7dbd-4214-bec2-894926f5590a",
-    yearly: "729d9b3d-1acc-4d58-8a39-49ab63330674",
+    monthly: "pdt_0NfOHJoiT8SDfibwKrYkd",
+    yearly: "pdt_0NfOI5bIL4ENBrcV8JEvM",
   },
   pro: {
-    monthly: "8da537b0-7192-46cd-b38a-bbe341febdf7",
-    yearly: "bcbd0c61-a5bd-4934-872a-7413324a330c",
+    monthly: "pdt_0NfOIP9Cjs7MnsYwuOHA5",
+    yearly: "pdt_0NfOIbGR12Bk6zmVhIfho",
   },
   elite: {
-    monthly: "d212d1e6-4958-4329-a1f4-5b460886fc9d",
-    yearly: "0b8f0aa3-57a7-4dd5-9ab3-ce68cebec7f6",
+    monthly: "pdt_0NfOIsOWsAjKTv5MycEUK",
+    yearly: "pdt_0NfOJ0bn0DYGJudz1v5dO",
   },
   business: {
-    monthly: "1fb17ce3-5bb4-473e-8c67-e50a8ce927dd",
-    yearly: "39752b51-d4cd-4a03-9718-bb2b95f71084",
+    monthly: "pdt_0NfOJ8SCeVWcmpoJtiHaX",
+    yearly: "pdt_0NfOJHY75Ky5FtnhU3ZPL",
   },
 };
 
