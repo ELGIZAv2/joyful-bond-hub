@@ -1393,6 +1393,24 @@ const MediaHubPage = () => {
           className="hidden"
           onChange={handleFile}
         />
+
+        {mode === "image" ? (
+          <FalModelPickerSheet
+            kind="image"
+            open={modelPickerOpen}
+            onClose={() => setModelPickerOpen(false)}
+            selectedSlug={imageModelSlug}
+            onSelect={(m) => { setImageModelSlug(m.slug); setModelPickerOpen(false); }}
+          />
+        ) : (
+          <FalModelPickerSheet
+            kind="video"
+            open={modelPickerOpen}
+            onClose={() => setModelPickerOpen(false)}
+            selectedSlug={videoModelSlug}
+            onSelect={(m) => { setVideoModelSlug(m.slug); setModelPickerOpen(false); }}
+          />
+        )}
       </div>
     </div>
     </>
