@@ -1,7 +1,6 @@
 // FalModelPickerSheet — clean bottom sheet picker for fal image/video models.
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
 import {
   useFalImageModels,
   useFalVideoModels,
@@ -23,37 +22,6 @@ type VideoProps = {
   selectedSlug: string | null;
   onSelect: (m: FalVideoModel) => void;
 };
-
-export function FalModelPickerSheet(props: ImageProps | VideoProps) {
-  const img = useFalImageModels();
-  const vid = useFalVideoModels();
-  const models = props.kind === "image" ? img.models : vid.models;
-
-  const sorted = useMemo(() => {
-    return [...(models as any[])].sort((a, b) => {
-      const af = a.is_featured ? 0 : 1;
-      const bf = b.is_featured ? 0 : 1;
-      if (af !== bf) return af - bf;
-      return a.sort_order - b.sort_order;
-    });
-  }, [models]);
-
-  const gradFor = (slug: string) => {
-    let h = 0;
-    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
-    const a = h % 360;
-    const b = (a + 60) % 360;
-    return `linear-gradient(135deg, hsl(${a} 70% 45%), hsl(${b} 65% 30%))`;
-  };
-
-  const initials = (name: string) =>
-    name
-      .split(/\s+/)
-      .map((s) => s[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
 
   return (
     <AnimatePresence>
