@@ -144,7 +144,7 @@ const LegalPageLayout = ({
         </div>
       </section>
 
-      </section>
+
 
       {/* SECTIONS */}
       <section className="relative pb-32">
