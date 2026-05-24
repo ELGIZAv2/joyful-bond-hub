@@ -20,6 +20,12 @@ function plainExcerpt(html: string, max = 1500): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    const authUser = await getAuthUser(req);
+    if (!authUser) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { prompt = "", title = "", docType = "", html = "" } = await req.json();
     const router = await getRouter();
     if (!router) {
