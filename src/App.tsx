@@ -363,7 +363,7 @@ const App = () => {
                   <Route path="/support" element={<SupportPage />} />
                   <Route path="/security" element={<SecurityPage />} />
                   <Route path="/enterprise" element={<EnterprisePage />} />
-                  <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
+                  <Route path="/about" element={<AboutPage />} />
 
                   {/* Sharing */}
                   <Route path="/share/:shareId" element={<SharedChatPage />} />

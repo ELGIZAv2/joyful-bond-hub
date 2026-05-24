@@ -58,6 +58,7 @@ const CompliancePage = () => (
     seoTitle="Compliance Statement — Megsy AI"
     seoDescription="Megsy AI compliance with sanctions, AML, anti-bribery, modern slavery, and law-enforcement process worldwide."
     canonicalPath="/legal/compliance"
+    heroVariant="team"
   />
 );
 

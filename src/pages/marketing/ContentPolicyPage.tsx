@@ -166,6 +166,7 @@ const ContentPolicyPage = () => (
     seoTitle="Content Policy — Megsy AI"
     seoDescription="Unified Acceptable Use, Moderation and Age Policy for Megsy AI. Zero tolerance for CSAM, non-consensual deepfakes, fraud, and abuse."
     canonicalPath="/policies/content"
+    heroVariant="portrait"
   />
 );
 

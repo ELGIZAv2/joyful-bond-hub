@@ -89,6 +89,7 @@ const DPAPage = () => (
     seoTitle="Data Processing Addendum (DPA) — Megsy AI"
     seoDescription="Megsy AI's GDPR-compliant Data Processing Addendum covering security, sub-processors, international transfers, breach notification, and AI training opt-out."
     canonicalPath="/legal/dpa"
+    heroVariant="team"
   />
 );
 

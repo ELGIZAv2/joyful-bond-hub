@@ -63,6 +63,7 @@ const AIDisclaimerPage = () => (
     seoTitle="AI Content Disclaimer — Megsy AI"
     seoDescription="Important disclaimers about AI-generated content on Megsy AI: accuracy, prohibited uses, ownership, provenance, and high-risk restrictions."
     canonicalPath="/legal/ai-disclaimer"
+    heroVariant="nature"
   />
 );
 
