@@ -98,7 +98,7 @@ const EgyptPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-black text-foreground">
       <LandingNavbar />
 
       {/* ===== HERO ===== */}

@@ -112,7 +112,7 @@ const LandingPage = ({ locale = "en" }: LandingPageProps) => {
     });
   }, [navigate]);
 
-  if (!ready) return <div className="min-h-screen bg-background" />;
+  if (!ready) return <div data-theme="dark" className="min-h-screen bg-black" />;
 
   return (
     <LandingContentProvider locale={locale}>
