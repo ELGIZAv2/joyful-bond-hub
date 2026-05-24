@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
+import heroTeam from "@/assets/marketing-hero-team.jpg";
+
 
 const companySizes = ["1-10", "11-50", "51-200", "201-500", "500+"];
 const needs = [
@@ -143,7 +145,7 @@ const EnterpriseFormSection = () => {
 
 const EnterprisePage = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <SEOHead
         title="Megsy AI for Enterprise — Custom AI at Scale"
         description="Enterprise AI with custom models, SLAs, SSO, dedicated infra and priority support. Talk to our team about scaling Megsy AI for your org."
@@ -151,29 +153,41 @@ const EnterprisePage = () => {
       />
       <LandingNavbar />
 
-
-
-      {/* Hero */}
-      <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(6,182,212,0.06),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.04),transparent_50%)]" />
-        <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-6">
-              <Building2 className="w-3.5 h-3.5" />
-              Enterprise
-            </div>
-            <h1 className="font-display text-[12vw] md:text-[5vw] font-black uppercase leading-[0.9] tracking-tighter">
-              AI AT{" "}
-              <span className="bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">ENTERPRISE</span>{" "}
-              SCALE
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-              Custom MC allocation, dedicated infrastructure, priority processing, and enterprise-grade security for your organization.
-            </p>
-          </motion.div>
+      {/* HERO */}
+      <section className="relative w-full overflow-hidden pt-20">
+        <div className="relative mx-auto max-w-7xl px-3 md:px-6">
+          <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden rounded-3xl md:h-[60vh] md:min-h-[460px]">
+            <img
+              src={heroTeam}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              width={1920}
+              height={1080}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/10" />
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9 }}
+              className="absolute inset-x-0 bottom-0 px-6 pb-12 md:pb-16"
+            >
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                <Building2 className="h-3.5 w-3.5" />
+                Enterprise
+              </div>
+              <h1 className="font-display text-[12vw] font-black uppercase leading-[0.9] tracking-tighter text-white drop-shadow-2xl md:text-[5.5vw]">
+                AI at enterprise scale.
+              </h1>
+              <p className="mt-5 max-w-2xl text-base text-white/75 md:text-lg">
+                Custom MC allocation, dedicated infrastructure, priority processing, and enterprise-grade security for your organization.
+              </p>
+            </motion.div>
+          </div>
         </div>
       </section>
+
 
       {/* Features Grid */}
       <section className="py-16 md:py-24">
