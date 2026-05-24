@@ -37,19 +37,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const source = String(body.source ?? "client").slice(0, 200);
-    const route = body.route ? String(body.route).slice(0, 500) : null;
-    const rawMsg = String(body.message ?? "Unknown error");
-    const rawErr = body.raw_error ? String(body.raw_error) : null;
-    const userAgent = body.user_agent ? String(body.user_agent).slice(0, 500) : null;
-    const ctx = (body.context && typeof body.context === "object") ? body.context : {};
-
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Identify the user from the Authorization header if present.
+    // Require a valid signed-in user to prevent anonymous spam / admin inbox flooding.
     let userId: string | null = null;
     let userEmail: string | null = null;
     const auth = req.headers.get("Authorization");
@@ -62,6 +54,20 @@ Deno.serve(async (req) => {
         }
       } catch { /* ignore */ }
     }
+    if (!userId) {
+      return new Response(JSON.stringify({ ok: false, error: "auth_required" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const source = String(body.source ?? "client").slice(0, 200);
+    const route = body.route ? String(body.route).slice(0, 500) : null;
+    const rawMsg = String(body.message ?? "Unknown error");
+    const rawErr = body.raw_error ? String(body.raw_error) : null;
+    const userAgent = body.user_agent ? String(body.user_agent).slice(0, 500) : null;
+    const ctx = (body.context && typeof body.context === "object") ? body.context : {};
 
     const safeMessage = sanitize(rawMsg);
     const safeRaw = rawErr ? sanitize(rawErr) : null;

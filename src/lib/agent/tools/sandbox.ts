@@ -29,8 +29,13 @@ export async function sandboxRunJs(args: {
 }): Promise<ToolResult<{ result: unknown }>> {
   const code = args.code || "";
   if (code.length > 4096) return { ok: false, error: "code_too_long" };
-  if (/\b(fetch|XMLHttpRequest|require|import|process|globalThis|Deno|window|document)\b/.test(code)) {
+  // Block dangerous identifiers AND prototype-chain / dynamic-access escape patterns.
+  if (/\b(fetch|XMLHttpRequest|require|import|process|globalThis|Deno|window|document|self|top|parent|location|navigator|eval|Function|constructor|prototype|__proto__|Reflect|Proxy|WebAssembly|atob|btoa|setTimeout|setInterval|postMessage|crypto|caches|indexedDB|localStorage|sessionStorage)\b/.test(code)) {
     return { ok: false, error: "disallowed_identifier" };
+  }
+  // Block bracket-notation string property access (e.g. obj["constructor"]) which bypasses identifier checks.
+  if (/\[\s*["'`]/.test(code)) {
+    return { ok: false, error: "bracket_string_access_not_allowed" };
   }
   try {
     // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
