@@ -1,45 +1,25 @@
 import SEOHead from "@/components/common/SEOHead";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ThumbsUp, Share2, ArrowLeft, X, Loader2, Plus, RefreshCw } from "lucide-react";
+import { Download, ThumbsUp, Share2, ArrowLeft, Loader2, Plus, RefreshCw, Sliders } from "lucide-react";
 import ImagePreviewModal from "@/components/modals/ImagePreviewModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredits } from "@/hooks/useCredits";
 import AppLayout from "@/layouts/AppLayout";
-import { getDefaultModel } from "@/components/model-picker/ModelSelector";
-import type { ModelOption } from "@/components/model-picker/ModelSelector";
-
-import { startJob, subscribeJob, resumeJob, getJob, listActiveJobs } from "@/lib/jobs/client";
+import { useFalImageModels, type FalImageModel } from "@/hooks/useFalModels";
+import { FalModelPickerSheet } from "@/components/fal-models/FalModelPickerSheet";
+import { MultiImageAttach } from "@/components/fal-models/MultiImageAttach";
+import { ImageModelBadges } from "@/components/fal-models/ModelBadges";
 import studioHero from "@/assets/studio-images-hero.jpg";
-
-const TruncatedText = ({ text }: { text: string }) => {
-  const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > 120;
-  return (
-    <div className="text-sm text-foreground">
-      {isLong && !expanded ? (
-        <>
-          <span>{text.slice(0, 120)}...</span>
-          <button onClick={() => setExpanded(true)} className="text-blue-400 text-xs ml-1 font-medium">Show more</button>
-        </>
-      ) : (
-        <>
-          <span>{text}</span>
-          {isLong && <button onClick={() => setExpanded(false)} className="text-blue-400 text-xs ml-1 font-medium">Show less</button>}
-        </>
-      )}
-    </div>
-  );
-};
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   images?: string[];
-  attachedImage?: string;
+  attachedImages?: string[];
 }
 
 const STUDIO_PLACEHOLDERS = [
@@ -48,13 +28,11 @@ const STUDIO_PLACEHOLDERS = [
   "Surreal artwork with bold colors...",
   "Describe your next masterpiece...",
 ];
-
 const HERO_TEXTS = [
   { main: "Create", accent: "masterpieces" },
   { main: "Imagine", accent: "anything" },
   { main: "Your art", accent: "your rules" },
 ];
-
 const LOADING_TEXTS = [
   { text: "Creating", accent: "magic" },
   { text: "Painting", accent: "pixels" },
@@ -71,12 +49,9 @@ const StudioThinkingLoader = () => {
   const current = LOADING_TEXTS[idx];
   return (
     <div className="flex items-center gap-2.5 py-2">
-      <motion.svg
-        width="18" height="18" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 text-blue-400"
+      <motion.svg width="18" height="18" viewBox="0 0 100 100" className="shrink-0 text-blue-400"
         animate={{ y: [0, -6, 0], rotate: [0, 180, 360], scale: [1, 1.15, 1] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-      >
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}>
         <path d="M50 5 L60 40 L95 50 L60 60 L50 95 L40 60 L5 50 L40 40 Z" fill="currentColor" />
       </motion.svg>
       <AnimatePresence mode="wait">
@@ -93,14 +68,28 @@ const ImageStudioPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userId, hasEnoughCredits, refreshCredits } = useCredits();
-  const [selectedModel, setSelectedModel] = useState<ModelOption>(() =>
-    location.state?.model || getDefaultModel("images")
-  );
+
+  const { models } = useFalImageModels();
+  const [selectedModel, setSelectedModel] = useState<FalImageModel | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aspect, setAspect] = useState<string>("1:1");
+  const [resolution, setResolution] = useState<string>("1K");
+
+  // Pick the featured model on first load
+  useEffect(() => {
+    if (!selectedModel && models.length) {
+      const def = models.find(m => m.is_featured) ?? models[0];
+      setSelectedModel(def);
+      setAspect(def.default_aspect);
+      setResolution(def.default_resolution);
+    }
+  }, [models, selectedModel]);
+
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
   const [isTyping, setIsTyping] = useState(true);
@@ -110,93 +99,9 @@ const ImageStudioPage = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // No persistence - start fresh every time
-
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
-
-  useEffect(() => {
-    if (location.state?.prompt) {
-      const p = location.state.prompt;
-      const img = location.state?.attachedImage || null;
-      setInput(p);
-      if (img) setAttachedImage(img);
-      setTimeout(() => handleSend(p, img), 200);
-      window.history.replaceState({}, "");
-    }
-  }, []);
-
-  // Resume in-flight jobs. Source 1 = same-tab localStorage, Source 2 = DB
-  // (background_jobs scoped to user) so the studio recovers cross-device too.
-  useEffect(() => {
-    const unsubs: Array<() => void> = [];
-    (async () => {
-      const jobIds = new Set<string>();
-      try {
-        const local = localStorage.getItem("imageStudio:activeJob");
-        if (local) jobIds.add(local);
-      } catch { /* ignore */ }
-      try {
-        const active = await listActiveJobs("image");
-        for (const j of active) jobIds.add(j.id);
-      } catch { /* ignore */ }
-
-      for (const jobId of jobIds) {
-        const row = await getJob(jobId).catch(() => null);
-        if (!row) continue;
-        if (row.status === "done" || row.status === "error" || row.status === "canceled") {
-          if (row.status === "done") {
-            const urls: string[] = row.output?.image_urls || (row.output?.image_url ? [row.output.image_url] : []);
-            if (urls.length) {
-              const promptText = row.input?.prompt || "";
-              setMessages(prev => [
-                ...prev,
-                { id: crypto.randomUUID(), role: "user", content: promptText },
-                { id: crypto.randomUUID(), role: "assistant", content: "", images: urls },
-              ]);
-            }
-          }
-          try {
-            const stored = localStorage.getItem("imageStudio:activeJob");
-            if (stored === jobId) localStorage.removeItem("imageStudio:activeJob");
-          } catch { /* ignore */ }
-          continue;
-        }
-        const promptText = row.input?.prompt || "";
-        const assistantId = crypto.randomUUID();
-        setMessages(prev => [
-          ...prev,
-          { id: crypto.randomUUID(), role: "user", content: promptText },
-          { id: assistantId, role: "assistant", content: "" },
-        ]);
-        setIsGenerating(true);
-        const unsub = resumeJob(jobId, {
-          onOutput: (out) => {
-            const urls: string[] = out?.image_urls || (out?.image_url ? [out.image_url] : []);
-            if (urls.length) setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, images: urls } : m));
-          },
-          onDone: () => {
-            setIsGenerating(false);
-            try {
-              const stored = localStorage.getItem("imageStudio:activeJob");
-              if (stored === jobId) localStorage.removeItem("imageStudio:activeJob");
-            } catch { /* ignore */ }
-          },
-          onError: (msg) => {
-            setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: `Error: ${msg}` } : m));
-            setIsGenerating(false);
-            try {
-              const stored = localStorage.getItem("imageStudio:activeJob");
-              if (stored === jobId) localStorage.removeItem("imageStudio:activeJob");
-            } catch { /* ignore */ }
-          },
-        });
-        unsubs.push(unsub);
-      }
-    })();
-    return () => { for (const u of unsubs) u(); };
-  }, []);
 
   // Typing animation
   useEffect(() => {
@@ -225,94 +130,70 @@ const ImageStudioPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setAttachedImage(reader.result as string);
+    reader.onload = () => setAttachedImages([reader.result as string]);
     reader.readAsDataURL(file);
     e.target.value = "";
   };
 
-  const handleSend = async (promptOverride?: string, imageOverride?: string | null) => {
+  const handleSend = async (promptOverride?: string) => {
     const prompt = promptOverride || input.trim();
-    if (!prompt || isGenerating) return;
+    if (!prompt || isGenerating || !selectedModel) return;
 
-    const cost = Number(selectedModel.credits) || 1;
+    const cost = selectedModel.credits;
     if (userId && !hasEnoughCredits(cost)) { toast.error("Insufficient credits"); return; }
 
-    const currentAttachedImage = imageOverride !== undefined ? imageOverride : attachedImage;
     setLastPrompt(prompt);
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content: prompt,
-      attachedImage: currentAttachedImage || undefined,
+      attachedImages: attachedImages.length ? [...attachedImages] : undefined,
     };
     const assistantMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: "" };
     setMessages(prev => [...prev, userMsg, assistantMsg]);
     setInput("");
-    setAttachedImage(null);
+    const sentImages = [...attachedImages];
+    setAttachedImages([]);
     setIsGenerating(true);
 
     try {
-      const body: any = {
-        prompt,
-        model: selectedModel.id,
-        user_id: userId,
-        credits_cost: cost,
-        num_images: 1,
-        image_size: { width: 1024, height: 1024 },
-        background: true,
-      };
-      if (currentAttachedImage) body.image_url = currentAttachedImage;
-
-      const { jobId } = await startJob("image", body);
-      // Remember in-flight job so we can resume after a refresh.
-      try { localStorage.setItem("imageStudio:activeJob", jobId); } catch { /* ignore */ }
-      const targetMsgId = assistantMsg.id;
-
-      await new Promise<void>((resolve) => {
-        const unsub = subscribeJob(jobId, {
-          onOutput: (out) => {
-            const urls: string[] = out?.image_urls || (out?.image_url ? [out.image_url] : []);
-            if (urls.length) {
-              setMessages(prev => prev.map(m => m.id === targetMsgId ? { ...m, content: "", images: urls } : m));
-            }
-          },
-          onDone: () => { try { localStorage.removeItem("imageStudio:activeJob"); } catch {} unsub(); resolve(); },
-          onError: (msg) => {
-            setMessages(prev => prev.map(m => m.id === targetMsgId ? { ...m, content: `Error: ${msg}` } : m));
-            try { localStorage.removeItem("imageStudio:activeJob"); } catch {}
-            unsub();
-            resolve();
-          },
-        });
+      const { data, error } = await supabase.functions.invoke("fal-generate-image", {
+        body: {
+          prompt,
+          model_slug: selectedModel.slug,
+          images: sentImages,
+          aspect_ratio: aspect,
+          resolution,
+          num_images: 1,
+        },
       });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Generation failed. Please try again.";
-      setMessages(prev => {
-        const copy = [...prev];
-        copy[copy.length - 1].content = msg;
-        return copy;
-      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const urls: string[] = data?.image_urls ?? (data?.image_url ? [data.image_url] : []);
+      setMessages(prev => prev.map(m => m.id === assistantMsg.id ? { ...m, images: urls } : m));
+    } catch (err: any) {
+      const msg = err?.message || "Generation failed";
+      setMessages(prev => prev.map(m => m.id === assistantMsg.id ? { ...m, content: msg } : m));
+      toast.error(msg);
     }
 
     setIsGenerating(false);
     refreshCredits();
   };
 
-  const handleRegenerate = () => {
-    if (lastPrompt) handleSend(lastPrompt);
-  };
-
+  const handleRegenerate = () => { if (lastPrompt) handleSend(lastPrompt); };
   const handleDownload = (url: string) => {
     const a = document.createElement("a"); a.href = url; a.download = "generated.png"; a.target = "_blank"; a.click();
   };
 
+  const showMulti = !!selectedModel?.supports_multi_image;
+
   return (
     <>
-    <SEOHead title="Image Studio" description="Pro AI image studio — generate, refine and iterate with the latest image models. Variations, references and unlimited remixes." path="/images/studio" noindex />
+    <SEOHead title="Image Studio" description="Pro AI image studio — generate, refine and iterate with the latest image models." path="/images/studio" noindex />
     <AppLayout>
       <div className="h-full flex flex-col bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-rose-950/20 via-background to-background pointer-events-none" />
-
 
         <div className="relative z-10 flex items-center gap-3 px-4 py-3 bg-background/50 backdrop-blur-xl">
           <button onClick={() => navigate("/images")} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-accent transition-colors">
@@ -349,9 +230,15 @@ const ImageStudioPage = () => {
           {messages.map((msg) => (
             <div key={msg.id} className={`mb-4 ${msg.role === "user" ? "flex justify-end" : "flex justify-start"}`}>
               <div className={`max-w-[85%] ${msg.role === "user" ? "bg-accent/30 rounded-2xl rounded-br-md p-3" : "p-1"}`}>
-                {msg.attachedImage && <img src={msg.attachedImage} alt="" className="w-32 h-32 object-cover rounded-xl mb-2" />}
-                {msg.content && msg.role === "user" && <TruncatedText text={msg.content} />}
-                {msg.content && msg.role === "assistant" && <div className="text-sm text-foreground px-2 py-1">{msg.content}</div>}
+                {msg.attachedImages && msg.attachedImages.length > 0 && (
+                  <div className="flex gap-1 mb-2 flex-wrap">
+                    {msg.attachedImages.map((src, i) => (
+                      <img key={i} src={src} alt="" className="w-20 h-20 object-cover rounded-xl" />
+                    ))}
+                  </div>
+                )}
+                {msg.content && msg.role === "user" && <div className="text-sm text-foreground">{msg.content}</div>}
+                {msg.content && msg.role === "assistant" && <div className="text-sm text-destructive px-2 py-1">{msg.content}</div>}
                 <AnimatePresence>
                   {msg.role === "assistant" && !msg.content && !msg.images?.length && isGenerating && (
                     <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
@@ -365,10 +252,10 @@ const ImageStudioPage = () => {
                       <div key={i}>
                         <img src={url} alt="" className="w-full rounded-2xl cursor-pointer hover:opacity-90 transition-opacity" onClick={() => setPreviewUrl(url)} />
                         <div className="flex items-center gap-1.5 mt-2 px-1">
-                          <button onClick={() => handleDownload(url)} className="p-2 rounded-xl bg-accent/50 hover:bg-accent transition-colors"><Download className="w-4 h-4 text-foreground" /></button>
-                          <button className="p-2 rounded-xl bg-accent/50 hover:bg-accent transition-colors"><ThumbsUp className="w-4 h-4 text-foreground" /></button>
-                          <button className="p-2 rounded-xl bg-accent/50 hover:bg-accent transition-colors"><Share2 className="w-4 h-4 text-foreground" /></button>
-                          <button onClick={handleRegenerate} className="p-2 rounded-xl bg-accent/50 hover:bg-accent transition-colors"><RefreshCw className="w-4 h-4 text-foreground" /></button>
+                          <button onClick={() => handleDownload(url)} className="p-2 rounded-xl bg-accent/50 hover:bg-accent"><Download className="w-4 h-4 text-foreground" /></button>
+                          <button className="p-2 rounded-xl bg-accent/50 hover:bg-accent"><ThumbsUp className="w-4 h-4 text-foreground" /></button>
+                          <button className="p-2 rounded-xl bg-accent/50 hover:bg-accent"><Share2 className="w-4 h-4 text-foreground" /></button>
+                          <button onClick={handleRegenerate} className="p-2 rounded-xl bg-accent/50 hover:bg-accent"><RefreshCw className="w-4 h-4 text-foreground" /></button>
                         </div>
                       </div>
                     ))}
@@ -382,12 +269,20 @@ const ImageStudioPage = () => {
         {/* Bottom Input */}
         <div className="relative z-10 p-3 bg-background/80 backdrop-blur-xl">
           <div className="rounded-2xl bg-accent/40 backdrop-blur-sm">
-            {attachedImage && (
+            {showMulti && attachedImages.length > 0 ? (
+              <MultiImageAttach
+                images={attachedImages}
+                onChange={setAttachedImages}
+                maxImages={selectedModel!.max_input_images}
+                label="References"
+              />
+            ) : attachedImages.length > 0 ? (
               <div className="px-4 pt-4 relative inline-block">
-                <img src={attachedImage} alt="" className="h-16 w-16 object-cover rounded-xl" />
-                <button onClick={() => setAttachedImage(null)} className="absolute -right-1 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px]">✕</button>
+                <img src={attachedImages[0]} alt="" className="h-16 w-16 object-cover rounded-xl" />
+                <button onClick={() => setAttachedImages([])} className="absolute -right-1 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"><Plus className="w-3 h-3 rotate-45" /></button>
               </div>
-            )}
+            ) : null}
+
             <div className="px-4 pt-4 pb-2">
               <textarea
                 value={input}
@@ -398,28 +293,91 @@ const ImageStudioPage = () => {
                 className="min-h-[64px] w-full bg-transparent text-sm text-foreground outline-none resize-none placeholder:text-muted-foreground/40"
               />
             </div>
-            <div className="flex items-center gap-2 px-4 pb-4">
-              <button onClick={() => fileInputRef.current?.click()} className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent/60 px-3 py-2 hover:bg-accent transition-all text-xs font-medium text-muted-foreground hover:text-foreground">
 
+            <div className="flex items-center gap-2 px-4 pb-4 flex-wrap">
+              <button
+                onClick={() => showMulti ? document.getElementById("fal-multi-trigger")?.click() : fileInputRef.current?.click()}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent/60 px-3 py-2 hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Media</span>
               </button>
+
+              <button
+                onClick={() => setPickerOpen(true)}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent/60 px-3 py-2 hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground max-w-[55%]"
+              >
+                <span className="truncate">{selectedModel?.display_name ?? "Model"}</span>
+                {selectedModel && <span className="text-[10px] text-primary font-semibold">{selectedModel.credits} MC</span>}
+              </button>
+
+              <button
+                onClick={() => setSettingsOpen(o => !o)}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent/60 px-3 py-2 hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>{aspect} · {resolution}</span>
+              </button>
+
               <div className="flex-1" />
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleSend()}
-                disabled={(!input.trim() && !attachedImage) || isGenerating}
+                disabled={(!input.trim() && !attachedImages.length) || isGenerating || !selectedModel}
                 className="shrink-0 rounded-xl bg-foreground px-6 py-2.5 text-xs font-semibold text-background transition-all disabled:opacity-30"
               >
                 {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate"}
               </motion.button>
             </div>
+
+            {settingsOpen && selectedModel && (
+              <div className="px-4 pb-4 -mt-2 space-y-2">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Aspect</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedModel.supported_aspects.map(a => (
+                      <button key={a} onClick={() => setAspect(a)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] ${aspect === a ? "bg-foreground text-background" : "bg-muted/40 text-muted-foreground"}`}>
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Resolution</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedModel.supported_resolutions.map(r => (
+                      <button key={r} onClick={() => setResolution(r)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] ${resolution === r ? "bg-foreground text-background" : "bg-muted/40 text-muted-foreground"}`}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="pt-1"><ImageModelBadges m={selectedModel} /></div>
+              </div>
+            )}
           </div>
         </div>
 
-        <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+        {/* Hidden multi trigger for the Media button when in multi mode */}
+        <input id="fal-multi-trigger" ref={fileInputRef} type="file" className="hidden" accept="image/*" multiple={showMulti} onChange={handleFileChange} />
 
         <ImagePreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
+
+        <FalModelPickerSheet
+          kind="image"
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          selectedSlug={selectedModel?.slug ?? null}
+          onSelect={(m) => {
+            setSelectedModel(m);
+            setAspect(m.default_aspect);
+            setResolution(m.default_resolution);
+            // reset extra attached images if the new model doesn't support multi
+            if (!m.supports_multi_image && attachedImages.length > 1) setAttachedImages(attachedImages.slice(0, 1));
+          }}
+        />
       </div>
     </AppLayout>
     </>
