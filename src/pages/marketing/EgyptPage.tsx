@@ -100,7 +100,14 @@ const EgyptPage = () => {
 
   return (
     <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-black text-foreground">
+      <SEOHead
+        title="Built in Egypt — The Story Behind Megsy AI"
+        description="Megsy AI is built in Egypt. Discover the country's mega projects, talent and ambition that fuel our all-in-one AI platform."
+        path="/egypt"
+      />
       <LandingNavbar />
+
+
 
       {/* ===== HERO ===== */}
       <section className="relative min-h-[110vh] flex items-center justify-center overflow-hidden">
