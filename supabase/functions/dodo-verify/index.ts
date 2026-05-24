@@ -1,4 +1,6 @@
 // Verifies a Dodo checkout session / payment status
+import { getAuthUser } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -9,6 +11,13 @@ const DODO_BASE = "https://live.dodopayments.com";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const authUser = await getAuthUser(req);
+  if (!authUser) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const apiKey = Deno.env.get("dodo-key");
@@ -50,6 +59,14 @@ Deno.serve(async (req) => {
     let status: "succeeded" | "open" | "failed" = "open";
     if (["succeeded", "paid", "active", "completed"].includes(raw)) status = "succeeded";
     else if (["failed", "cancelled", "canceled", "expired"].includes(raw)) status = "failed";
+
+    // Prevent cross-user payment metadata leakage: if metadata pins a user_id, it must match caller.
+    const metaUserId = data?.metadata?.user_id;
+    if (metaUserId && metaUserId !== authUser.id) {
+      return new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(JSON.stringify({
       status,

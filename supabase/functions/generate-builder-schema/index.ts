@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getRouter, ROUTER_MODELS, lovableEquivalent } from "../_shared/llm-router.ts";
+import { getAuthUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +41,14 @@ function buildSystem(fileType: FileType, userLanguage?: string): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const authUser = await getAuthUser(req);
+  if (!authUser) {
+    return new Response(JSON.stringify({ success: false, error: "unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
 
   try {
     const body = await req.json().catch(() => ({}));

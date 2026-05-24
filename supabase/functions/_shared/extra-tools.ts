@@ -434,14 +434,9 @@ async function codeInterpreter(code: string, language: string): Promise<string> 
     body: JSON.stringify({ code, language }),
   });
   if (!r.ok) {
-    // Fallback: simple JS eval for trivial JS only
-    if (language === "javascript") {
-      try {
-        const result = Function(`"use strict"; ${code}`)();
-        return JSON.stringify({ result: String(result) });
-      } catch (err) { return JSON.stringify({ error: (err as Error).message }); }
-    }
-    return JSON.stringify({ error: `e2b ${r.status}` });
+    // No local fallback: executing arbitrary AI-generated JS in the edge runtime is unsafe.
+    console.error(`[code-interpreter] e2b unavailable (status ${r.status}) — refusing local fallback`);
+    return JSON.stringify({ error: `code interpreter unavailable (e2b ${r.status})` });
   }
   const data = await r.json();
   return JSON.stringify({
