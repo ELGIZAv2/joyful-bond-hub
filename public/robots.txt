@@ -20,6 +20,9 @@ Disallow: /code
 Disallow: /settings
 Disallow: /profile
 Disallow: /notifications
+Disallow: /auth/callback/
+Disallow: /oauth/authorize
+Disallow: /reset-password
 
 Sitemap: https://megsyai.com/sitemap.xml
 Sitemap: https://megsyai.com/sitemap-media.xml

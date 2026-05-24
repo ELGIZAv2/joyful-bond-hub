@@ -1,3 +1,4 @@
+import SEOHead from "@/components/common/SEOHead";
 import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { Highlighter } from "@/components/magicui/highlighter";
@@ -3429,6 +3430,7 @@ Ask me anything to get started!`;
 
   return (
     <>
+      <SEOHead title="Chat" description="Chat with 80+ AI models in one place — GPT, Claude, Gemini, Grok, Llama and more. Stream answers, run deep research, and continue conversations across devices." path="/chat" noindex />
       {/* Megsy Operator now renders as a tiny inline pill above the input — see below. */}
       <div className="h-[100dvh] flex bg-background overflow-hidden">
         {/* Desktop persistent sidebar */}

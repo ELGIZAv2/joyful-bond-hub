@@ -1,3 +1,4 @@
+import SEOHead from "@/components/common/SEOHead";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ThumbsUp, Share2, ArrowLeft, X, Loader2, Plus, ChevronDown, RefreshCw } from "lucide-react";
@@ -306,6 +307,8 @@ const ImageStudioPage = () => {
   };
 
   return (
+    <>
+    <SEOHead title="Image Studio" description="Pro AI image studio — generate, refine and iterate with the latest image models. Variations, references and unlimited remixes." path="/images/studio" noindex />
     <AppLayout>
       <div className="h-full flex flex-col bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-rose-950/20 via-background to-background pointer-events-none" />
@@ -428,6 +431,7 @@ const ImageStudioPage = () => {
         <ImagePreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
       </div>
     </AppLayout>
+    </>
   );
 };
 
