@@ -112,6 +112,11 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Contact Megsy AI — Support & Enterprise"
+        description="Reach Megsy AI support or talk to our enterprise team for custom plans, SSO, and dedicated onboarding."
+        path="/contact"
+      />
       <LandingNavbar />
 
       <section className="relative pt-28 pb-20 md:pt-36 md:pb-32">
