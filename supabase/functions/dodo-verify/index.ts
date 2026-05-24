@@ -1,4 +1,6 @@
 // Verifies a Dodo checkout session / payment status
+import { getAuthUser } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -9,6 +11,13 @@ const DODO_BASE = "https://live.dodopayments.com";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const authUser = await getAuthUser(req);
+  if (!authUser) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const apiKey = Deno.env.get("dodo-key");
