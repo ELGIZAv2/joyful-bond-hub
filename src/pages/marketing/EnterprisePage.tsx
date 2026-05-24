@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
+import SEOHead from "@/components/common/SEOHead";
 
 const companySizes = ["1-10", "11-50", "51-200", "201-500", "500+"];
 const needs = [
@@ -143,7 +144,14 @@ const EnterpriseFormSection = () => {
 const EnterprisePage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Megsy AI for Enterprise — Custom AI at Scale"
+        description="Enterprise AI with custom models, SLAs, SSO, dedicated infra and priority support. Talk to our team about scaling Megsy AI for your org."
+        path="/enterprise"
+      />
       <LandingNavbar />
+
+
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">
