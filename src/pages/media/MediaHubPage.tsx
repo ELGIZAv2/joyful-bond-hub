@@ -463,9 +463,9 @@ const MediaHubPage = () => {
     const p = prompt.trim();
     if (!p && !attached) return;
     if (mode === "image") {
-      navigate("/images/studio", { state: { prompt: p, attachedImage: attached, model: imageModel } });
+      navigate("/images/studio", { state: { prompt: p, attachedImage: attached, modelSlug: imageModelSlug } });
     } else {
-      navigate("/videos/studio", { state: { prompt: p, attachedImage: attached, model: videoModel } });
+      navigate("/videos/studio", { state: { prompt: p, attachedImage: attached, modelSlug: videoModelSlug } });
     }
   };
 
