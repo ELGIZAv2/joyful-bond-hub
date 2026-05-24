@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
-import heroTeam from "@/assets/marketing-hero-team.jpg";
+import heroTeam from "@/assets/about-team-working.jpg";
 
 const supportSchema = z.object({
   username: z.string().trim().min(1, "Username is required").max(100),

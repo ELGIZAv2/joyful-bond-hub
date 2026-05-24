@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
-import heroTeam from "@/assets/marketing-hero-team.jpg";
+import heroTeam from "@/assets/about-team-working.jpg";
 
 
 const companySizes = ["1-10", "11-50", "51-200", "201-500", "500+"];

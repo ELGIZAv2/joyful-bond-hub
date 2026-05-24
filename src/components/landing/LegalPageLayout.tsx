@@ -5,8 +5,10 @@ import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
 import heroLake from "@/assets/marketing-hero-lake.jpg";
 import heroNature from "@/assets/marketing-hero-nature.jpg";
-import heroTeam from "@/assets/marketing-hero-team.jpg";
+import heroTeamWorking from "@/assets/about-team-working.jpg";
 import heroPortrait from "@/assets/marketing-hero-portrait.jpg";
+import heroCairo from "@/assets/about-cairo.jpg";
+import heroEngineer from "@/assets/about-engineer.jpg";
 
 export interface LegalSection {
   heading: string;
@@ -14,13 +16,15 @@ export interface LegalSection {
   list?: string[];
 }
 
-export type HeroVariant = "lake" | "nature" | "team" | "portrait";
+export type HeroVariant = "lake" | "nature" | "team" | "portrait" | "cairo" | "engineer";
 
 const heroMap: Record<HeroVariant, string> = {
   lake: heroLake,
   nature: heroNature,
-  team: heroTeam,
+  team: heroTeamWorking,
   portrait: heroPortrait,
+  cairo: heroCairo,
+  engineer: heroEngineer,
 };
 
 interface LegalPageLayoutProps {
