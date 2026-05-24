@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
@@ -11,7 +10,7 @@ import heroCairo from "@/assets/about-cairo.jpg";
 const founders = [
   {
     name: "Hamza Hassan",
-    role: "Founder & Co-CEO",
+    role: "Co-Founder",
     img: founderHamza,
     bio: "Drives product, design and the obsessive details. Believes great AI should disappear into the work.",
     rotate: -4,
@@ -19,62 +18,38 @@ const founders = [
   },
   {
     name: "Abdalla Mohamed",
-    role: "Founder & Co-CEO",
+    role: "Co-Founder",
     img: founderAbdalla,
-    bio: "Leads infrastructure and the neural mesh. Obsessed with making complex systems feel calm.",
+    bio: "Leads engineering and infrastructure. Obsessed with making complex systems feel calm.",
     rotate: 4,
     y: 0,
   },
 ];
 
-const divisions = [
-  { n: "01", title: "Cinematic Video Studio", sub: "Megsy Video Model", desc: "Cinematic 8K video from a single prompt. Automatic scene composition, intelligent camera moves, dramatic lighting." },
-  { n: "02", title: "Hyper-Realistic Image Foundry", sub: "Megsy Image Model", desc: "4K+ images across 50+ artistic styles. Photoreal portraits, architectural renders, interior concepts on demand." },
-  { n: "03", title: "Chat Nexus", sub: "Multimodal Intelligence", desc: "Cross-reasoning across frontier models with live web intelligence and verified, multi-source answers." },
-  { n: "04", title: "Code Architect", sub: "Code Generation Model", desc: "Describe what you want — Megsy builds full-stack apps with autonomous backend, database design and APIs." },
-  { n: "05", title: "File & Data Foundry", sub: "Document Intelligence", desc: "Upload any PDF or spreadsheet. Megsy extracts, analyses and restructures data into decks and dashboards." },
-  { n: "06", title: "Slide & Deck Studio", sub: "Presentation Intelligence", desc: "From idea to investor-ready pitch in minutes. Brand-aware layouts, smart charts, exportable to PPTX or PDF." },
-  { n: "07", title: "The Neural Mesh", sub: "Autonomous Orchestration", desc: "An orchestration layer where every division communicates autonomously — concept to deployment in one flow." },
-];
-
-const stats = [
-  { value: "7", label: "Sovereign divisions" },
-  { value: "80+", label: "Models unified" },
-  { value: "50+", label: "Languages" },
-  { value: "10M+", label: "Assets generated" },
-];
-
-const journey = [
-  { year: "2026", title: "The Foundation", desc: "First comprehensive Egyptian AI platform — chat, image, video and code under one neural infrastructure." },
-  { year: "2027", title: "The Expansion", desc: "Scaling across the Middle East and Africa. Onboarding enterprise clients. Tools for creators and developers." },
-  { year: "2028", title: "The Sovereign Era", desc: "Millions of users globally. Megsy becomes a primary engine of the new digital economy." },
+// Real platform features (from the product itself)
+const features = [
+  { n: "01", title: "AI Chat", sub: "Megsy V1", desc: "Conversational AI with web search, deep research and file upload — built on top of 36+ underlying engines." },
+  { n: "02", title: "Image Generation", sub: "Megsy Imagine", desc: "Text-to-image and image-to-image with multiple models, aspect ratios from 1:1 to 21:9, up to 4K." },
+  { n: "03", title: "Video Generation", sub: "Megsy Video", desc: "Text-to-video and image-to-video. Durations from 5 to 10 seconds, with audio support." },
+  { n: "04", title: "Code Builder", sub: "Apps & Web", desc: "Describe what you want and Megsy builds and deploys a working web app inside a sandbox." },
+  { n: "05", title: "File Analysis", sub: "Documents & Data", desc: "Upload PDFs, images and documents — Megsy reads, extracts and answers questions about them." },
 ];
 
 const values = [
-  { title: "Built for creators", desc: "Every model, studio and tool designed around people who ship — not benchmarks." },
-  { title: "Honest by default", desc: "Clear pricing, transparent credits, AI that tells you when it isn't sure." },
-  { title: "Made in Cairo, for the world", desc: "Rooted in Egypt. Built in 50+ languages. Serving creators on every continent." },
-  { title: "Privacy is a feature", desc: "Your work is yours. We never train on private projects. Delete everything in one click." },
-];
-
-const faqs = [
-  { q: "What is the Megsy Proprietary AI Model?", a: "A neural infrastructure that orchestrates 80+ frontier models behind a single calm workspace, with cross-reasoning between text, image, video, audio and code." },
-  { q: "How does Megsy ensure data security and privacy?", a: "Your private projects are never used for training. Data is encrypted in transit and at rest, with full deletion in one click and SOC 2-aligned controls across the stack." },
-  { q: "What is the scalability of the Megsy API infrastructure?", a: "Built on globally distributed compute with elastic scaling. Enterprise tiers include dedicated regions, private endpoints and SLA-backed throughput." },
-  { q: "How does the 20% Lifetime Affiliate Program work?", a: "Every affiliate earns 20% on every payment from every user they bring — for life. No caps, no tiers, no expiration." },
-  { q: "What does enterprise onboarding look like?", a: "A dedicated solutions engineer, SSO and SCIM, custom data retention, optional on-prem deployment, and a 30-day pilot." },
-  { q: "Which integrations does Megsy support?", a: "Native connectors for Google Workspace, Microsoft 365, Slack, Notion, Figma, GitHub, Supabase, Stripe and 60+ more — plus a REST API for everything else." },
+  { title: "Built for creators", desc: "Every tool is designed around people who actually ship — not benchmarks." },
+  { title: "Honest by default", desc: "One transparent credit, clear pricing, no hidden lock-ins." },
+  { title: "Made in Egypt", desc: "Designed and built in Cairo. Serving creators in any language they write in." },
+  { title: "Your work is yours", desc: "We never train on your private projects. Delete your account and data any time from settings." },
 ];
 
 const AboutPage = () => {
   const navigate = useNavigate();
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
     <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <SEOHead
-        title="About Megsy AI — The Sovereign AI Platform Built in Cairo"
-        description="Seven sovereign divisions. One neural mesh. Megsy AI unifies the world's best models for chat, slides, images, video and code into one calm, honest workspace built in Cairo for the world."
+        title="About Megsy AI — One Workspace for Chat, Image, Video & Code"
+        description="Megsy AI is an all-in-one creative platform unifying chat, image, video, code and file analysis behind one workspace and one credit. Built in Cairo by two founders."
         path="/about"
       />
       <LandingNavbar />
@@ -97,7 +72,7 @@ const AboutPage = () => {
             className="font-display text-[9vw] uppercase leading-[0.95] tracking-tight text-foreground md:text-[5.5vw]"
           >
             Two founders.{" "}
-            <span className="text-primary">One sovereign mission.</span>
+            <span className="text-primary">One creative workspace.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 25 }}
@@ -105,8 +80,8 @@ const AboutPage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mt-4 max-w-2xl px-2 text-[13px] leading-snug text-muted-foreground md:mt-6 md:text-lg"
           >
-            Seven divisions. One neural mesh. Designed in Cairo. Deployed globally. The
-            sovereign AI entity for intelligence.
+            Chat, image, video, code and file analysis — built into a single workspace,
+            priced in a single credit. Designed and built in Cairo.
           </motion.p>
 
           <motion.div
@@ -125,7 +100,7 @@ const AboutPage = () => {
               }}
             >
               <span className="relative block rounded-full bg-black px-8 py-3 text-sm font-semibold text-white md:px-10 md:py-4 md:text-base">
-                Join the mission
+                Start using Megsy
               </span>
             </button>
             <button
@@ -137,7 +112,7 @@ const AboutPage = () => {
           </motion.div>
         </div>
 
-        {/* Founder portrait fan — same vocabulary as HeroSection videos */}
+        {/* Founder portrait fan */}
         <div className="relative z-0 mt-10 flex w-full max-w-[1100px] items-end justify-center gap-4 px-4 pb-4 md:mt-14 md:gap-8">
           {founders.map((f, i) => (
             <motion.div
@@ -169,31 +144,8 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* STATS marquee-style */}
-      <section className="border-y border-border/30 bg-background py-10 md:py-14">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 md:grid-cols-4">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.06 }}
-              className="text-center md:text-left"
-            >
-              <p className="font-display text-4xl font-black text-foreground md:text-5xl">
-                {s.value}
-              </p>
-              <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                {s.label}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
       {/* INTRO */}
-      <section className="py-20 md:py-28">
+      <section className="border-t border-border/30 py-20 md:py-28">
         <div className="mx-auto grid max-w-6xl items-start gap-12 px-6 md:grid-cols-12 md:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -203,11 +155,11 @@ const AboutPage = () => {
             className="md:col-span-5"
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Our story
+              Why we built it
             </p>
             <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-foreground md:text-5xl">
-              AI is the sovereign{" "}
-              <span className="text-primary">right of every creator.</span>
+              Too many tabs.{" "}
+              <span className="text-primary">Too many subscriptions.</span>
             </h2>
           </motion.div>
           <motion.div
@@ -218,26 +170,26 @@ const AboutPage = () => {
             className="space-y-5 text-base leading-relaxed text-muted-foreground md:col-span-7 md:text-lg"
           >
             <p>
-              Megsy started with a frustration any creator knows — every new model arrived in
-              its own tab, with its own pricing, its own quirks. People were spending more
-              time switching apps than actually making things.
+              Every new AI model arrives in its own tab, with its own pricing and its own
+              quirks. Creators end up spending more time switching apps than actually making
+              things.
             </p>
             <p>
-              So we built one calm workspace: chat, slides, deep research, images, video,
-              cinema, lip-sync and full-stack code — running on the world's best engines,
-              priced in one honest currency, made in Cairo for the whole world.
+              So we built Megsy: one workspace where chat, images, video, code and files all
+              live together — running on the best engines available, priced in a single
+              credit (MC).
             </p>
             <p>
-              We are still proudly independent, still small enough to answer every email, and
-              still obsessed with one question: what would it feel like if AI tools simply got
-              out of your way?
+              We are two founders, working from Cairo, building the tool we wished existed.
+              Small enough to answer every email. Honest enough to tell you what each feature
+              actually costs.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* FOUNDERS — full editorial cards */}
-      <section className="py-20 md:py-28">
+      {/* FOUNDERS — editorial cards */}
+      <section className="border-t border-border/30 py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -291,7 +243,7 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* DIVISIONS grid */}
+      {/* FEATURES — real product */}
       <section className="border-y border-border/30 py-24 md:py-32">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div
@@ -305,22 +257,22 @@ const AboutPage = () => {
               The platform
             </p>
             <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-foreground md:text-6xl">
-              Seven sovereign <span className="text-primary">divisions.</span>
+              Five tools. <span className="text-primary">One workspace.</span>
             </h2>
             <p className="mt-5 text-base text-muted-foreground md:text-lg">
-              An exhaustive suite of AI-powered departments, each engineered to dominate its
-              vertical — connected through a single orchestration layer.
+              Every feature in Megsy runs on the same workspace and the same credit. No more
+              juggling subscriptions across half a dozen tools.
             </p>
           </motion.div>
 
           <div className="grid gap-px overflow-hidden rounded-3xl border border-border/30 bg-border/40 md:grid-cols-2">
-            {divisions.map((d, i) => (
+            {features.map((d, i) => (
               <motion.div
                 key={d.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.04 }}
+                transition={{ duration: 0.6, delay: i * 0.05 }}
                 className="bg-background p-8 transition-colors hover:bg-white/[0.02] md:p-10"
               >
                 <p className="font-mono text-xs text-primary">{d.n}</p>
@@ -360,67 +312,22 @@ const AboutPage = () => {
               className="max-w-2xl"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/80">
-                Designed in Cairo
+                Built in Cairo
               </p>
               <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-white md:text-6xl">
-                A neural mesh that <span className="text-primary">connects all.</span>
+                Independent. <span className="text-primary">Indie. Honest.</span>
               </h2>
               <p className="mt-6 max-w-xl text-base text-white/80 md:text-lg">
-                Every division communicates autonomously — executing complex multi-stage
-                projects from concept to deployment, without ever leaving the canvas.
+                We are not backed by a giant. We are two founders writing every line and
+                answering every message — building the tool we needed ourselves.
               </p>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* JOURNEY */}
-      <section className="py-24 md:py-32">
-        <div className="mx-auto max-w-6xl px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="mb-14 max-w-2xl"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              The journey
-            </p>
-            <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-foreground md:text-6xl">
-              From Cairo <span className="text-primary">to the world.</span>
-            </h2>
-          </motion.div>
-
-          <div>
-            {journey.map((j, i) => (
-              <motion.div
-                key={j.year}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="grid items-baseline gap-6 border-t border-border/30 py-10 md:grid-cols-[180px_1fr]"
-              >
-                <p className="font-display text-3xl font-black text-primary md:text-4xl">
-                  {j.year}
-                </p>
-                <div>
-                  <h3 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-                    {j.title}
-                  </h3>
-                  <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground md:text-base">
-                    {j.desc}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* VALUES */}
-      <section className="border-y border-border/30 py-24 md:py-32">
+      <section className="border-b border-border/30 py-24 md:py-32">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -459,55 +366,8 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-24 md:py-32">
-        <div className="mx-auto max-w-3xl px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="mb-12"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-              Questions
-            </p>
-            <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-foreground md:text-6xl">
-              Frequently <span className="text-primary">asked.</span>
-            </h2>
-          </motion.div>
-
-          <div className="divide-y divide-border/30 border-y border-border/30">
-            {faqs.map((f, i) => (
-              <div key={f.q}>
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between gap-6 py-6 text-left transition-colors hover:text-primary"
-                >
-                  <span className="text-base font-medium text-foreground md:text-lg">
-                    {f.q}
-                  </span>
-                  <span className="text-2xl text-muted-foreground">
-                    {openFaq === i ? "−" : "+"}
-                  </span>
-                </button>
-                {openFaq === i && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="pb-6 text-[15px] leading-relaxed text-muted-foreground"
-                  >
-                    {f.a}
-                  </motion.p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* FINAL CTA — landing style */}
-      <section className="relative overflow-hidden border-t border-border/30 px-4 py-24 md:py-32">
+      <section className="relative overflow-hidden px-4 py-24 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -516,12 +376,11 @@ const AboutPage = () => {
             transition={{ duration: 0.7 }}
             className="font-display text-[9vw] uppercase leading-[0.95] tracking-tight text-foreground md:text-[5vw]"
           >
-            Build the future{" "}
-            <span className="text-primary">with Megsy.</span>
+            Try Megsy{" "}
+            <span className="text-primary">for yourself.</span>
           </motion.h2>
           <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground md:text-lg">
-            The sovereign AI platform designed in Cairo and deployed globally. Take your ideas
-            from concept to reality.
+            One workspace. One credit. Five tools. Built in Cairo, made for the world.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row md:gap-4">
             <button
@@ -534,7 +393,7 @@ const AboutPage = () => {
               }}
             >
               <span className="relative block rounded-full bg-black px-10 py-4 text-base font-semibold text-white">
-                Start creating
+                Get started
               </span>
             </button>
             <button

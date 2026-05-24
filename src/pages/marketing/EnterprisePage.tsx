@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, Shield, Zap, Users, Server, Headphones, Lock, Building2, Star, BarChart3, FileText, Clock, Gem, Crown, Rocket, Globe } from "lucide-react";
+import { Send, Shield, Zap, Users, Server, Headphones, Lock, BarChart3, Clock, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
-import heroTeam from "@/assets/about-team-working.jpg";
 
 
 const companySizes = ["1-10", "11-50", "51-200", "201-500", "500+"];
@@ -25,21 +24,15 @@ const needs = [
 ];
 
 const features = [
-  { icon: Gem, title: "Custom MC Allocation", desc: "Tailored credit allocation based on your organization's unique needs." },
-  { icon: Zap, title: "Priority Speed Access", desc: "Maximum speed across all AI models with dedicated GPU allocation." },
-  { icon: Server, title: "Dedicated Infrastructure", desc: "Isolated compute resources with guaranteed uptime and performance." },
-  { icon: Shield, title: "SLA Guarantees", desc: "Contractual uptime and performance guarantees for mission-critical operations." },
-  { icon: Rocket, title: "Custom API & Integrations", desc: "Seamless integration with your existing systems and workflows." },
-  { icon: Lock, title: "Enterprise Security", desc: "SOC2-ready, GDPR compliance, and advanced encryption standards." },
-  { icon: Globe, title: "Data Privacy & Compliance", desc: "Full data sovereignty with regulatory compliance for your industry." },
-  { icon: Star, title: "Early Access to New Models", desc: "Be the first to test and deploy cutting-edge AI models." },
-  { icon: BarChart3, title: "Advanced Analytics", desc: "Detailed usage analytics and reporting for your entire team." },
-  { icon: Users, title: "Dedicated Account Manager", desc: "A personal point of contact to ensure your success." },
-  { icon: Headphones, title: "24/7 Priority Support", desc: "Round-the-clock support with guaranteed response times." },
-  { icon: Clock, title: "Priority Onboarding", desc: "Fast-track team onboarding with personalized training sessions." },
-  { icon: FileText, title: "Monthly Business Reviews", desc: "Regular strategic reviews to optimize your AI usage." },
-  { icon: Crown, title: "Volume Discounts", desc: "Exclusive pricing for high-volume enterprise needs." },
-  { icon: Building2, title: "Custom Contract & Billing", desc: "Flexible contracts and invoicing to match your finance systems." },
+  { icon: Zap, title: "Custom credit allocation", desc: "A monthly MC volume sized to your real usage, with one consolidated invoice." },
+  { icon: Users, title: "Team workspaces", desc: "Shared seats with central billing and per-member usage visibility." },
+  { icon: Headphones, title: "Priority support channel", desc: "A direct line to the founders for setup, escalations and product feedback." },
+  { icon: Server, title: "Higher rate limits", desc: "Raised concurrent generation and API limits sized for production workloads." },
+  { icon: Globe, title: "Data residency on request", desc: "We can discuss regional deployment options depending on your jurisdiction." },
+  { icon: Lock, title: "Custom data agreements", desc: "DPA, custom retention windows and on-request training opt-outs on every plan." },
+  { icon: BarChart3, title: "Usage reporting", desc: "Monthly usage breakdowns per team, per feature and per workspace." },
+  { icon: Clock, title: "Onboarding session", desc: "A live session to set up your workspace, train your team and answer questions." },
+  { icon: Shield, title: "Contract & invoicing", desc: "Annual contracts, custom payment terms, PO support and tax-compliant invoicing." },
 ];
 
 const EnterpriseFormSection = () => {
@@ -147,59 +140,61 @@ const EnterprisePage = () => {
   return (
     <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <SEOHead
-        title="Megsy AI for Enterprise — Custom AI at Scale"
-        description="Enterprise AI with custom models, SLAs, SSO, dedicated infra and priority support. Talk to our team about scaling Megsy AI for your org."
+        title="Megsy AI for Enterprise — Custom Plans for Teams"
+        description="Custom credit volume, team workspaces, priority support and tailored contracts for organizations using Megsy AI at scale. Talk to the founders."
         path="/enterprise"
       />
       <LandingNavbar />
 
-      {/* HERO */}
-      <section className="relative w-full overflow-hidden pt-20">
-        <div className="relative mx-auto max-w-7xl px-3 md:px-6">
-          <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden rounded-3xl md:h-[60vh] md:min-h-[460px]">
-            <img
-              src={heroTeam}
-              alt=""
-              loading="eager"
-              fetchPriority="high"
-              width={1920}
-              height={1080}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/10" />
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9 }}
-              className="absolute inset-x-0 bottom-0 px-6 pb-12 md:pb-16"
-            >
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
-                <Building2 className="h-3.5 w-3.5" />
-                Enterprise
-              </div>
-              <h1 className="font-display text-[12vw] font-black uppercase leading-[0.9] tracking-tighter text-white drop-shadow-2xl md:text-[5.5vw]">
-                AI at enterprise scale.
-              </h1>
-              <p className="mt-5 max-w-2xl text-base text-white/75 md:text-lg">
-                Custom MC allocation, dedicated infrastructure, priority processing, and enterprise-grade security for your organization.
-              </p>
-            </motion.div>
-          </div>
+      {/* HERO — landing style */}
+      <section className="relative overflow-hidden bg-background pb-12 pt-32 text-center md:pt-44">
+        <div className="mx-auto w-full max-w-4xl px-4">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+          >
+            For teams
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="font-display text-[9vw] uppercase leading-[0.95] tracking-tight text-foreground md:text-[5.5vw]"
+          >
+            Megsy{" "}
+            <span className="text-primary">for your team.</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mx-auto mt-4 max-w-2xl text-[13px] leading-snug text-muted-foreground md:mt-6 md:text-lg"
+          >
+            Custom credit volume, shared workspaces, priority support and tailored contracts
+            — sized to how your team actually uses Megsy.
+          </motion.p>
         </div>
       </section>
 
-
       {/* Features Grid */}
-      <section className="py-16 md:py-24">
+      <section className="border-t border-border/30 py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
-          <motion.h2
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="font-display text-2xl font-bold text-foreground text-center mb-12"
+            transition={{ duration: 0.7 }}
+            className="mb-14 max-w-3xl"
           >
-            Everything Your Enterprise Needs
-          </motion.h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              What's included
+            </p>
+            <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-foreground md:text-5xl">
+              Built around <span className="text-primary">your team.</span>
+            </h2>
+          </motion.div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((h, i) => (
               <motion.div
@@ -208,15 +203,14 @@ const EnterprisePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-colors hover:border-white/20 hover:bg-white/[0.04]"
+                className="rounded-2xl border border-border/30 bg-white/[0.02] p-6 transition-colors hover:border-primary/30 hover:bg-white/[0.04]"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-                  <h.icon className="h-5 w-5 text-white/80" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-border/30 bg-white/[0.04]">
+                  <h.icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 text-base font-semibold text-white">{h.title}</h3>
-                <p className="text-sm leading-relaxed text-white/55">{h.desc}</p>
+                <h3 className="mb-2 text-base font-semibold text-foreground">{h.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{h.desc}</p>
               </motion.div>
-
             ))}
           </div>
         </div>
