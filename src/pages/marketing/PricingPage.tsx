@@ -245,6 +245,11 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background text-foreground">
+      <SEOHead
+        title="Pricing — Megsy AI Plans & Credits"
+        description="Simple plans for Megsy AI. Pay-as-you-go credits or monthly subscriptions for chat, images, video, slides and full-stack builds."
+        path="/pricing"
+      />
       {/* Bubble + utility CSS scoped to page */}
       <style>{`
         @keyframes pricing-bubble-rise {
