@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/supabaseFunction";
 import { WORKSPACE_PRODUCT_MAP, type WorkspacePaidPlan } from "@/lib/workspacePlans";
 
 export async function openWorkspaceCheckout(plan: WorkspacePaidPlan, interval: "monthly" | "yearly" = "monthly") {
@@ -14,7 +15,7 @@ export async function openWorkspaceCheckout(plan: WorkspacePaidPlan, interval: "
     return { ok: false as const, reason: "auth_required" };
   }
 
-  const { data, error } = await supabase.functions.invoke("dodo-checkout", {
+  const { data, error } = await invokeFunction("dodo-checkout", {
     body: {
       product_id,
       plan,

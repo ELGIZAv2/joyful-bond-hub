@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/supabaseFunction";
 import GlowButton from "@/components/branding/GlowButton";
 import { goBackOr } from "@/lib/navigation";
 import { WORKSPACE_PRODUCT_MAP } from "@/lib/workspacePlans";
@@ -212,7 +213,7 @@ const PricingPage = () => {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke("dodo-checkout", {
+      const { data, error } = await invokeFunction("dodo-checkout", {
         body: { product_id, plan: tier },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });

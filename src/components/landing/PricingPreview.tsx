@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Check, Loader2, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/supabaseFunction";
 import { WORKSPACE_PRODUCT_MAP } from "@/lib/workspacePlans";
 
 const PRODUCT_IDS: Record<string, string> = Object.fromEntries(
@@ -112,8 +113,9 @@ const PricingPreview = () => {
     }
     setLoadingTier(tier);
     try {
-      const { data, error } = await supabase.functions.invoke("polar-checkout", {
+      const { data, error } = await invokeFunction("dodo-checkout", {
         body: { product_id, plan: tier },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) throw error;
       if (data?.url) {

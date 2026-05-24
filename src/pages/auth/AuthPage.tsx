@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/supabaseFunction";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
@@ -67,7 +68,7 @@ const AuthPage = () => {
     if (!emailRegex.test(normalizedEmail)) { toast.error("Please enter a valid email address"); return; }
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("check-email", { body: { email: normalizedEmail } });
+      const { data, error } = await invokeFunction("check-email", { body: { email: normalizedEmail } });
       if (error) throw new Error(error.message);
       if (data.exists) { setUserExists(true); setHas2FA(data.two_factor_enabled); setStep("password"); }
       else { setUserExists(false); await sendOTP(normalizedEmail); setStep("otp-signup"); }
@@ -79,7 +80,7 @@ const AuthPage = () => {
     const normalizedEmail = (targetEmail || email).trim().toLowerCase();
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("otp", { body: { action: "send", email: normalizedEmail } });
+      const { data, error } = await invokeFunction("otp", { body: { action: "send", email: normalizedEmail } });
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Failed to send code");
       toast.success("Verification code sent to your email");
@@ -216,19 +217,19 @@ const AuthPage = () => {
     setIsSubmitting(true);
     try {
       if (step === "otp-2fa") {
-        const { data, error } = await supabase.functions.invoke("otp", { body: { action: "verify-2fa", email: email.trim().toLowerCase(), code } });
+        const { data, error } = await invokeFunction("otp", { body: { action: "verify-2fa", email: email.trim().toLowerCase(), code } });
         if (error) throw new Error(error.message);
         if (!data?.success) throw new Error(data?.error || "Invalid code");
         toast.success("Welcome back!");
         if (redirectUrl) window.location.href = redirectUrl; else navigate("/chat");
       } else if (step === "otp-reset") {
-        const { data, error } = await supabase.functions.invoke("otp", { body: { action: "verify-reset", email: email.trim().toLowerCase(), code } });
+        const { data, error } = await invokeFunction("otp", { body: { action: "verify-reset", email: email.trim().toLowerCase(), code } });
         if (error) throw new Error(error.message);
         if (!data?.success) throw new Error(data?.error || "Invalid code");
         setVerifiedResetCode(code);
         setStep("reset-password");
       } else {
-        const { data, error } = await supabase.functions.invoke("otp", { body: { action: "verify-only", email: email.trim().toLowerCase(), code } });
+        const { data, error } = await invokeFunction("otp", { body: { action: "verify-only", email: email.trim().toLowerCase(), code } });
         if (error) throw new Error(error.message);
         if (!data?.success) throw new Error(data?.error || "Invalid code");
         setStep("set-password");
@@ -244,7 +245,7 @@ const AuthPage = () => {
     if (!newPassword || newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("signup", { body: { email: email.trim().toLowerCase(), password: newPassword } });
+      const { data, error } = await invokeFunction("signup", { body: { email: email.trim().toLowerCase(), password: newPassword } });
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Could not create account");
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
@@ -259,7 +260,7 @@ const AuthPage = () => {
     if (!newPassword || newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("update-password", { body: { email: email.trim().toLowerCase(), password: newPassword, code: verifiedResetCode } });
+      const { data, error } = await invokeFunction("update-password", { body: { email: email.trim().toLowerCase(), password: newPassword, code: verifiedResetCode } });
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Failed to update password");
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
