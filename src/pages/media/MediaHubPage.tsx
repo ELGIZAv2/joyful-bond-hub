@@ -265,6 +265,22 @@ const MediaHubPage = () => {
     scrollContainerRef.current?.scrollTo({ top: 0, left: 0 });
   }, [activeTab]);
 
+  // Sync aspect / duration defaults to the selected model
+  useEffect(() => {
+    const m: any = currentModel;
+    if (!m) return;
+    if (mode === "image") {
+      if (m.default_aspect && !m.supported_aspects?.includes(imgAspect)) setImgAspect(m.default_aspect);
+    } else {
+      if (m.default_aspect && !m.supported_aspects?.includes(vidAspect)) setVidAspect(m.default_aspect);
+      if (m.default_duration && !m.supported_durations?.map((d: number) => `${d}s`).includes(vidDuration)) {
+        setVidDuration(`${m.default_duration}s`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageModelSlug, videoModelSlug, mode]);
+
+
   useEffect(() => {
     if (!settingsOpen) return;
     const onDown = (e: Event) => {
@@ -736,20 +752,6 @@ const MediaHubPage = () => {
 
                     <div className="flex items-center gap-1.5 ml-auto shrink-0">
                       <button
-                        onClick={() => setModelPickerOpen(true)}
-                        className="h-10 px-3 flex items-center gap-1.5 rounded-2xl ios26-glass text-foreground/85 hover:text-foreground transition-colors text-[12px] font-semibold max-w-[160px]"
-                        aria-label="Select model"
-                      >
-                        <span className="truncate">{currentModel?.display_name ?? "Model"}</span>
-                        {currentModel && (
-                          <span className="text-[10px] font-bold text-indigo-300 tabular-nums">
-                            {mode === "image"
-                              ? `${(currentModel as any).credits} MC`
-                              : `${(currentModel as any).credits_per_second ?? (currentModel as any).credits_per_video} MC`}
-                          </span>
-                        )}
-                      </button>
-                      <button
                         ref={settingsBtnRef}
                         onClick={() => {
                           setSettingsOpen((v) => !v);
@@ -786,24 +788,35 @@ const MediaHubPage = () => {
                         <div className="bg-popover/85 backdrop-blur-3xl backdrop-saturate-200 border border-border rounded-3xl shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.08),0_20px_60px_-20px_hsl(var(--foreground)/0.35)] p-2 max-h-[65vh] overflow-y-auto">
                           <AnimatePresence mode="wait" initial={false}>
                           {(() => {
+                            const m: any = currentModel;
+                            const modelAspects: string[] = m?.supported_aspects ?? (mode === "image"
+                              ? ["1:1", "2:3", "3:2", "4:3", "4:5", "16:9", "9:16"]
+                              : ["1:1", "16:9", "9:16"]);
+                            const modelDurations: number[] = m?.supported_durations ?? [6, 10];
+                            const modelRow = {
+                              key: "model" as const,
+                              label: "Model",
+                              value: currentModel?.display_name ?? "—",
+                            };
                             const rows = mode === "image"
                               ? [
+                                  modelRow,
                                   { key: "aspect" as const, label: "Aspect Ratio", value: imgAspect },
                                   { key: "style" as const, label: "Style", value: imgStyle },
                                   { key: "improve" as const, label: "Improve Your Prompt", value: "" },
                                 ]
                               : [
+                                  modelRow,
                                   { key: "aspect" as const, label: "Aspect Ratio", value: vidAspect },
                                   { key: "duration" as const, label: "Duration", value: vidDuration },
                                   { key: "improve" as const, label: "Improve Your Prompt", value: "" },
                                 ];
                             const subOptions: Record<string, string[]> = {
-                              aspect: mode === "image"
-                                ? ["1:1", "2:3", "3:2", "4:3", "4:5", "16:9", "9:16"]
-                                : ["1:1", "16:9", "9:16"],
+                              aspect: modelAspects,
                               style: ["Cinematic", "Creative", "Dynamic", "Fashion", "Portrait", "Stock Photo", "Vibrant", "None"],
-                              duration: ["6s", "10s"],
+                              duration: modelDurations.map(d => `${d}s`),
                             };
+
 
 
                             // Inline IMPROVE WITH AI
@@ -934,12 +947,26 @@ const MediaHubPage = () => {
                                 {rows.map((r) => (
                                   <button
                                     key={r.key}
-                                    onClick={() => setSettingsSub(r.key)}
-                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-accent transition-colors"
+                                    onClick={() => {
+                                      if (r.key === "model") {
+                                        setSettingsOpen(false);
+                                        setModelPickerOpen(true);
+                                      } else {
+                                        setSettingsSub(r.key as any);
+                                      }
+                                    }}
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-accent transition-colors ${r.key === "model" ? "bg-foreground/[0.04]" : ""}`}
                                   >
                                     <span className="font-medium">{r.label}</span>
                                     <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                                      {r.value && <span className="truncate max-w-[110px]">{r.value}</span>}
+                                      {r.key === "model" && currentModel && (
+                                        <span className="text-[10px] font-bold text-indigo-300 tabular-nums">
+                                          {mode === "image"
+                                            ? `${(currentModel as any).credits} MC`
+                                            : `${(currentModel as any).credits_per_second ?? (currentModel as any).credits_per_video} MC`}
+                                        </span>
+                                      )}
+                                      {r.value && <span className="truncate max-w-[140px]">{r.value}</span>}
                                       <ChevronRightIcon className="w-3.5 h-3.5" />
                                     </span>
                                   </button>
