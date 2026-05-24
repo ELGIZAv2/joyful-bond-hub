@@ -1,7 +1,7 @@
 import SEOHead from "@/components/common/SEOHead";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ThumbsUp, Share2, ArrowLeft, X, Loader2, Plus, ChevronDown, RefreshCw } from "lucide-react";
+import { Download, ThumbsUp, Share2, ArrowLeft, X, Loader2, Plus, RefreshCw } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { useCredits } from "@/hooks/useCredits";
 import AppLayout from "@/layouts/AppLayout";
 import { getDefaultModel } from "@/components/model-picker/ModelSelector";
 import type { ModelOption } from "@/components/model-picker/ModelSelector";
-import ModelPickerSheet from "@/components/model-picker/ModelPickerSheet";
+
 import { startJob, subscribeJob, resumeJob, getJob, listActiveJobs } from "@/lib/jobs/client";
 import studioHero from "@/assets/studio-videos-hero.jpg";
 
@@ -98,7 +98,7 @@ const VideoStudioPage = () => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
@@ -297,7 +297,6 @@ const VideoStudioPage = () => {
       <div className="h-full flex flex-col bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-background to-background pointer-events-none" />
 
-        <ModelPickerSheet open={modelPickerOpen} onClose={() => setModelPickerOpen(false)} onSelect={m => { setSelectedModel(m); setModelPickerOpen(false); }} mode="videos" selectedModelId={selectedModel.id} />
 
         <div className="relative z-10 flex items-center gap-3 px-4 py-3 bg-background/50 backdrop-blur-xl">
           <button onClick={() => navigate("/videos")} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-accent transition-colors">
@@ -384,16 +383,8 @@ const VideoStudioPage = () => {
               />
             </div>
             <div className="flex items-center gap-2 px-4 pb-4">
-              <button
-                onClick={() => setModelPickerOpen(true)}
-                className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent/60 px-3 py-2 hover:bg-accent transition-all text-xs font-medium"
-              >
-                {null}
-
-                <span className="text-foreground font-semibold truncate max-w-[100px]">{selectedModel.name}</span>
-                <ChevronDown className="w-3 h-3 text-muted-foreground" />
-              </button>
               <button onClick={() => fileInputRef.current?.click()} className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent/60 px-3 py-2 hover:bg-accent transition-all text-xs font-medium text-muted-foreground hover:text-foreground">
+
                 <Plus className="w-3.5 h-3.5" />
                 <span>Media</span>
               </button>
