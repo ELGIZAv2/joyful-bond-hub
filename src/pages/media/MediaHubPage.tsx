@@ -215,8 +215,26 @@ const MediaHubPage = () => {
   const [prompt, setPrompt] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  const [imageModel, setImageModel] = useState<ModelOption>(NANO_BANANA_DEFAULT);
-  const [videoModel, setVideoModel] = useState<ModelOption>(HAILUO_DEFAULT);
+  const { models: falImageModels } = useFalImageModels();
+  const { models: falVideoModels } = useFalVideoModels();
+  const [imageModelSlug, setImageModelSlug] = useState<string | null>(null);
+  const [videoModelSlug, setVideoModelSlug] = useState<string | null>(null);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!imageModelSlug && falImageModels.length) {
+      setImageModelSlug((falImageModels.find(m => m.is_featured) ?? falImageModels[0]).slug);
+    }
+  }, [falImageModels, imageModelSlug]);
+  useEffect(() => {
+    if (!videoModelSlug && falVideoModels.length) {
+      setVideoModelSlug((falVideoModels.find(m => m.is_featured) ?? falVideoModels[0]).slug);
+    }
+  }, [falVideoModels, videoModelSlug]);
+
+  const currentModel = mode === "image"
+    ? falImageModels.find(m => m.slug === imageModelSlug)
+    : falVideoModels.find(m => m.slug === videoModelSlug);
   const [attached, setAttached] = useState<string | null>(null);
   const [phIdx, setPhIdx] = useState(0);
   const [imageShowcase, setImageShowcase] = useState<ShowcaseItem[]>([]);
