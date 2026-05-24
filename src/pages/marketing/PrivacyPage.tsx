@@ -155,6 +155,7 @@ const PrivacyPage = () => (
     seoTitle="Privacy Policy"
     seoDescription="Learn how Megsy AI collects, uses, shares, and protects your personal data, and the rights you have over it."
     canonicalPath="/privacy"
+    heroVariant="team"
   />
 );
 

@@ -42,6 +42,7 @@ const AccessibilityPage = () => (
     seoTitle="Accessibility Statement — Megsy AI"
     seoDescription="Megsy AI's accessibility commitments under WCAG 2.2, the European Accessibility Act, the ADA, and how to report barriers."
     canonicalPath="/legal/accessibility"
+    heroVariant="portrait"
   />
 );
 

@@ -146,6 +146,7 @@ const TrustCenterPage = () => (
     seoTitle="Trust & Compliance Center — Megsy AI"
     seoDescription="Megsy AI Trust Center. GDPR, CCPA, LGPD, EU AI Act, PCI-DSS, sub-processors, accessibility, sanctions, and transparency reporting."
     canonicalPath="/trust"
+    heroVariant="team"
   />
 );
 

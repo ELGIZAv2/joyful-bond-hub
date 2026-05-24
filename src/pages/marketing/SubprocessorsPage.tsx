@@ -81,6 +81,7 @@ const SubprocessorsPage = () => (
     seoTitle="Sub-processor List — Megsy AI"
     seoDescription="Up-to-date list of sub-processors Megsy AI engages to deliver hosting, AI inference, payments, communications, and analytics."
     canonicalPath="/legal/subprocessors"
+    heroVariant="nature"
   />
 );
 

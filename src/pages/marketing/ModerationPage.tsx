@@ -70,6 +70,7 @@ const ModerationPage = () => (
     seoTitle="Content Moderation Policy — Megsy AI"
     seoDescription="Megsy AI's content moderation policy: prohibited content, restricted categories, identity tools, reporting, enforcement, and appeals."
     canonicalPath="/legal/moderation"
+    heroVariant="portrait"
   />
 );
 

@@ -44,6 +44,7 @@ const AgePolicyPage = () => (
     seoTitle="Age & Eligibility Policy — Megsy AI"
     seoDescription="Megsy AI age requirements, sensitive-tool restrictions, and parental control guidance."
     canonicalPath="/legal/age"
+    heroVariant="portrait"
   />
 );
 
