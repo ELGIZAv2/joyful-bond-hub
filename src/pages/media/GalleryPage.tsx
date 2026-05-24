@@ -1,4 +1,5 @@
 // Gallery — user's generated media from media_assets
+import SEOHead from "@/components/common/SEOHead";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Download, Trash2, ImageIcon, Film, Music } from "lucide-react";

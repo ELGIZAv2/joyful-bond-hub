@@ -1,3 +1,4 @@
+import SEOHead from "@/components/common/SEOHead";
 import { useState, useRef, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { Highlighter } from "@/components/magicui/highlighter";
