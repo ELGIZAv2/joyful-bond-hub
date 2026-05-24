@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
+import SEOHead from "@/components/common/SEOHead";
 
 /* ── Schemas ── */
 const supportSchema = z.object({
