@@ -1,7 +1,6 @@
 // FalModelPickerSheet — clean bottom sheet picker for fal image/video models.
 import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
 import {
   useFalImageModels,
   useFalVideoModels,
@@ -37,23 +36,6 @@ export function FalModelPickerSheet(props: ImageProps | VideoProps) {
       return a.sort_order - b.sort_order;
     });
   }, [models]);
-
-  const gradFor = (slug: string) => {
-    let h = 0;
-    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
-    const a = h % 360;
-    const b = (a + 60) % 360;
-    return `linear-gradient(135deg, hsl(${a} 70% 45%), hsl(${b} 65% 30%))`;
-  };
-
-  const initials = (name: string) =>
-    name
-      .split(/\s+/)
-      .map((s) => s[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase();
 
   return (
     <AnimatePresence>
@@ -113,31 +95,6 @@ export function FalModelPickerSheet(props: ImageProps | VideoProps) {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      {/* Thumbnail */}
-                      <div className="relative shrink-0">
-                        <div
-                          className={`w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center text-[11px] font-black text-white/90 shadow-md ${
-                            selected ? "ring-2 ring-primary/40" : "ring-1 ring-border/40"
-                          }`}
-                          style={
-                            m.thumbnail_url
-                              ? undefined
-                              : { background: gradFor(m.slug) }
-                          }
-                        >
-                          {m.thumbnail_url ? (
-                            <img src={m.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span>{initials(m.display_name)}</span>
-                          )}
-                        </div>
-                        {selected && (
-                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full border-2 border-card flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={4} />
-                          </div>
-                        )}
-                      </div>
-
                       {/* Body */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
