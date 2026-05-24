@@ -5,11 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppSidebar from "@/components/layout/AppSidebar";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
-import ModelPickerSheet from "@/components/model-picker/ModelPickerSheet";
 import type { ModelOption } from "@/components/model-picker/ModelSelector";
 import { supabase } from "@/integrations/supabase/client";
 import type { ShowcaseItem } from "@/components/showcase/ShowcaseGrid";
-import { useDynamicModels } from "@/hooks/useModels";
 import { useCredits } from "@/hooks/useCredits";
 import { toast } from "sonner";
 import { Loader2, Check, ImagePlus as ImagePlusIcon } from "lucide-react";
@@ -223,7 +221,7 @@ const MediaHubPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [prompt, setPrompt] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  
   const [imageModel, setImageModel] = useState<ModelOption>(NANO_BANANA_DEFAULT);
   const [videoModel, setVideoModel] = useState<ModelOption>(HAILUO_DEFAULT);
   const [attached, setAttached] = useState<string | null>(null);
@@ -237,14 +235,14 @@ const MediaHubPage = () => {
   const [showAllTools, setShowAllTools] = useState(false);
   
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsSub, setSettingsSub] = useState<null | "model" | "aspect" | "style" | "duration" | "improve">(null);
+  const [settingsSub, setSettingsSub] = useState<null | "aspect" | "style" | "duration" | "improve">(null);
   const [imgAspect, setImgAspect] = useState("1:1");
   const [imgStyle, setImgStyle] = useState("Dynamic");
   const [vidAspect, setVidAspect] = useState("16:9");
   const [vidDuration, setVidDuration] = useState("6s");
   const [improveText, setImproveText] = useState("");
   const [improving, setImproving] = useState(false);
-  const { models: allDynamicModels } = useDynamicModels();
+  
   const { credits } = useCredits();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -526,17 +524,8 @@ const MediaHubPage = () => {
           }}
         />
 
-        <ModelPickerSheet
-          open={modelPickerOpen}
-          onClose={() => setModelPickerOpen(false)}
-          onSelect={(m) => {
-            if (mode === "image") setImageModel(m);
-            else setVideoModel(m);
-            setModelPickerOpen(false);
-          }}
-          mode={mode === "image" ? "images" : "videos"}
-          selectedModelId={currentModel.id}
-        />
+
+
 
         {/* Mobile top bar — hidden on desktop */}
         <div className="md:hidden relative z-30 flex items-center justify-between px-4 pt-3 pb-2">
@@ -743,7 +732,6 @@ const MediaHubPage = () => {
                         }}
                         className={`w-10 h-10 flex items-center justify-center rounded-2xl ios26-glass text-foreground/80 hover:text-foreground transition-colors ${settingsOpen ? "ring-1 ring-primary/40" : ""}`}
                         aria-label="Settings"
-                        title={currentModel.name}
                       >
                         <SettingsGearIcon className="w-[18px] h-[18px]" />
                       </button>
@@ -775,13 +763,11 @@ const MediaHubPage = () => {
                           {(() => {
                             const rows = mode === "image"
                               ? [
-                                  { key: "model" as const, label: "Model", value: currentModel.name },
                                   { key: "aspect" as const, label: "Aspect Ratio", value: imgAspect },
                                   { key: "style" as const, label: "Style", value: imgStyle },
                                   { key: "improve" as const, label: "Improve Your Prompt", value: "" },
                                 ]
                               : [
-                                  { key: "model" as const, label: "Model", value: currentModel.name },
                                   { key: "aspect" as const, label: "Aspect Ratio", value: vidAspect },
                                   { key: "duration" as const, label: "Duration", value: vidDuration },
                                   { key: "improve" as const, label: "Improve Your Prompt", value: "" },
@@ -794,66 +780,6 @@ const MediaHubPage = () => {
                               duration: ["6s", "10s"],
                             };
 
-                            // Inline MODEL picker
-                            if (settingsSub === "model") {
-                              const filtered = allDynamicModels.filter((m) =>
-                                mode === "image" ? m.type === "image" : (m.type === "video" || m.type === "video-i2v"),
-                              );
-                              return (
-                                <motion.div
-                                  key="model"
-                                  initial={{ opacity: 0, x: 12 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  exit={{ opacity: 0, x: 12 }}
-                                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                                >
-                                  <button
-                                    onClick={() => setSettingsSub(null)}
-                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 mb-2"
-                                  >
-                                    <ChevronRightIcon className="w-3.5 h-3.5 rotate-180" />
-                                    Back
-                                  </button>
-                                  <div className="flex flex-col gap-1 px-1 pb-1 max-h-[320px] overflow-y-auto scrollbar-hide">
-                                    {filtered.map((m) => {
-                                      const active = m.id === currentModel.id;
-                                      return (
-                                        <button
-                                          key={m.id}
-                                          onClick={() => {
-                                            const opt: ModelOption = {
-                                              id: m.id,
-                                              name: m.name,
-                                              credits: m.credits.toString(),
-                                              requiresImage: m.requiresImage,
-                                              category: "model",
-                                            };
-                                            if (mode === "image") setImageModel(opt); else setVideoModel(opt);
-                                            setSettingsSub(null);
-                                          }}
-                                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left transition-colors ${
-                                            active ? "bg-primary/15 ring-1 ring-primary/40" : "hover:bg-accent"
-                                          }`}
-                                        >
-                                          <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-[13px] font-semibold text-foreground truncate">{m.name}</span>
-                                              {active && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
-                                            </div>
-                                            <p className="text-[11px] text-muted-foreground line-clamp-1 leading-snug mt-0.5">
-                                              {m.description}
-                                            </p>
-                                          </div>
-                                          <span className="text-[10.5px] text-muted-foreground/80 font-medium shrink-0">
-                                            {m.credits === 0 ? "Free" : `${m.credits} MC`}
-                                          </span>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </motion.div>
-                              );
-                            }
 
                             // Inline IMPROVE WITH AI
                             if (settingsSub === "improve") {
