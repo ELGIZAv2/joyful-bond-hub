@@ -3,12 +3,25 @@ import { useEffect } from "react";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
+import heroLake from "@/assets/marketing-hero-lake.jpg";
+import heroNature from "@/assets/marketing-hero-nature.jpg";
+import heroTeam from "@/assets/marketing-hero-team.jpg";
+import heroPortrait from "@/assets/marketing-hero-portrait.jpg";
 
 export interface LegalSection {
   heading: string;
   paragraphs?: string[];
   list?: string[];
 }
+
+export type HeroVariant = "lake" | "nature" | "team" | "portrait";
+
+const heroMap: Record<HeroVariant, string> = {
+  lake: heroLake,
+  nature: heroNature,
+  team: heroTeam,
+  portrait: heroPortrait,
+};
 
 interface LegalPageLayoutProps {
   eyebrow: string;
@@ -19,6 +32,7 @@ interface LegalPageLayoutProps {
   seoTitle: string;
   seoDescription: string;
   canonicalPath: string;
+  heroVariant?: HeroVariant;
 }
 
 const LegalPageLayout = ({
@@ -30,7 +44,9 @@ const LegalPageLayout = ({
   seoTitle,
   seoDescription,
   canonicalPath,
+  heroVariant = "lake",
 }: LegalPageLayoutProps) => {
+  const heroSrc = heroMap[heroVariant];
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
