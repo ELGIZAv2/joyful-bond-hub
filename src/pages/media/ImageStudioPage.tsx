@@ -1,7 +1,7 @@
 import SEOHead from "@/components/common/SEOHead";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, ThumbsUp, Share2, ArrowLeft, X, Loader2, Plus, ChevronDown, RefreshCw } from "lucide-react";
+import { Download, ThumbsUp, Share2, ArrowLeft, X, Loader2, Plus, RefreshCw } from "lucide-react";
 import ImagePreviewModal from "@/components/modals/ImagePreviewModal";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
