@@ -290,6 +290,8 @@ const VideoStudioPage = () => {
   };
 
   return (
+    <>
+    <SEOHead title="Video Studio" description="AI video studio — text-to-video, image-to-video and cinematic shot generation with the latest video models." path="/videos/studio" noindex />
     <AppLayout>
       <div className="h-full flex flex-col bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/20 via-background to-background pointer-events-none" />

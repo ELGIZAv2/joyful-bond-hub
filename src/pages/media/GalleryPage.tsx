@@ -58,6 +58,8 @@ const GalleryPage = () => {
   };
 
   return (
+    <>
+    <SEOHead title="Gallery" description="Your personal gallery of AI-generated images, videos and audio — download, share and manage every asset." path="/gallery" noindex />
     <div className="min-h-[100dvh] bg-background">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-background/85 backdrop-blur-xl border-b border-border/60">

@@ -1443,6 +1443,7 @@ const MediaHubPage = () => {
         />
       </div>
     </div>
+    </>
   );
 };
 
