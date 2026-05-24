@@ -79,13 +79,15 @@ const VideoStudioPage = () => {
 
   useEffect(() => {
     if (!selectedModel && models.length) {
-      const def = models.find(m => m.is_featured) ?? models[0];
+      const state = (location.state as any) || {};
+      const fromHub = state.modelSlug ? models.find(m => m.slug === state.modelSlug) : null;
+      const def = fromHub ?? models.find(m => m.is_featured) ?? models[0];
       setSelectedModel(def);
       setAspect(def.default_aspect);
       setResolution(def.default_resolution);
       setDuration(def.default_duration);
     }
-  }, [models, selectedModel]);
+  }, [models, selectedModel, location.state]);
 
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -126,6 +128,18 @@ const VideoStudioPage = () => {
     const interval = setInterval(() => setHeroIdx(i => (i + 1) % HERO_TEXTS.length), 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Consume handoff state from MediaHub
+  useEffect(() => {
+    const s = (location.state as any) || {};
+    if (s.prompt) setInput(s.prompt);
+    if (s.attachedImage) setAttachedImages([s.attachedImage]);
+    if (s.prompt || s.attachedImage || s.modelSlug) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppSidebar from "@/components/layout/AppSidebar";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
-import type { ModelOption } from "@/components/model-picker/ModelSelector";
 import { supabase } from "@/integrations/supabase/client";
+import { FalModelPickerSheet } from "@/components/fal-models/FalModelPickerSheet";
+import { useFalImageModels, useFalVideoModels } from "@/hooks/useFalModels";
 import type { ShowcaseItem } from "@/components/showcase/ShowcaseGrid";
 import { useCredits } from "@/hooks/useCredits";
 import { toast } from "sonner";
@@ -64,16 +65,8 @@ type Mode = "image" | "video";
 type Tab = "home" | "studio" | "community";
 type IconCmp = (p: { className?: string; strokeWidth?: number }) => JSX.Element;
 
-const NANO_BANANA_DEFAULT: ModelOption = {
-  id: "nano-banana",
-  name: "Nano Banana",
-  credits: "1",
-};
-const HAILUO_DEFAULT: ModelOption = {
-  id: "hailuo-2.3",
-  name: "Hailuo 2.3",
-  credits: "70",
-};
+
+
 
 
 const PLACEHOLDERS: Record<Mode, string[]> = {
@@ -222,8 +215,26 @@ const MediaHubPage = () => {
   const [prompt, setPrompt] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  const [imageModel, setImageModel] = useState<ModelOption>(NANO_BANANA_DEFAULT);
-  const [videoModel, setVideoModel] = useState<ModelOption>(HAILUO_DEFAULT);
+  const { models: falImageModels } = useFalImageModels();
+  const { models: falVideoModels } = useFalVideoModels();
+  const [imageModelSlug, setImageModelSlug] = useState<string | null>(null);
+  const [videoModelSlug, setVideoModelSlug] = useState<string | null>(null);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!imageModelSlug && falImageModels.length) {
+      setImageModelSlug((falImageModels.find(m => m.is_featured) ?? falImageModels[0]).slug);
+    }
+  }, [falImageModels, imageModelSlug]);
+  useEffect(() => {
+    if (!videoModelSlug && falVideoModels.length) {
+      setVideoModelSlug((falVideoModels.find(m => m.is_featured) ?? falVideoModels[0]).slug);
+    }
+  }, [falVideoModels, videoModelSlug]);
+
+  const currentModel = mode === "image"
+    ? falImageModels.find(m => m.slug === imageModelSlug)
+    : falVideoModels.find(m => m.slug === videoModelSlug);
   const [attached, setAttached] = useState<string | null>(null);
   const [phIdx, setPhIdx] = useState(0);
   const [imageShowcase, setImageShowcase] = useState<ShowcaseItem[]>([]);
@@ -452,9 +463,9 @@ const MediaHubPage = () => {
     const p = prompt.trim();
     if (!p && !attached) return;
     if (mode === "image") {
-      navigate("/images/studio", { state: { prompt: p, attachedImage: attached, model: imageModel } });
+      navigate("/images/studio", { state: { prompt: p, attachedImage: attached, modelSlug: imageModelSlug } });
     } else {
-      navigate("/videos/studio", { state: { prompt: p, attachedImage: attached, model: videoModel } });
+      navigate("/videos/studio", { state: { prompt: p, attachedImage: attached, modelSlug: videoModelSlug } });
     }
   };
 
@@ -724,6 +735,20 @@ const MediaHubPage = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5 ml-auto shrink-0">
+                      <button
+                        onClick={() => setModelPickerOpen(true)}
+                        className="h-10 px-3 flex items-center gap-1.5 rounded-2xl ios26-glass text-foreground/85 hover:text-foreground transition-colors text-[12px] font-semibold max-w-[160px]"
+                        aria-label="Select model"
+                      >
+                        <span className="truncate">{currentModel?.display_name ?? "Model"}</span>
+                        {currentModel && (
+                          <span className="text-[10px] font-bold text-indigo-300 tabular-nums">
+                            {mode === "image"
+                              ? `${(currentModel as any).credits} MC`
+                              : `${(currentModel as any).credits_per_second ?? (currentModel as any).credits_per_video} MC`}
+                          </span>
+                        )}
+                      </button>
                       <button
                         ref={settingsBtnRef}
                         onClick={() => {
@@ -1368,6 +1393,24 @@ const MediaHubPage = () => {
           className="hidden"
           onChange={handleFile}
         />
+
+        {mode === "image" ? (
+          <FalModelPickerSheet
+            kind="image"
+            open={modelPickerOpen}
+            onClose={() => setModelPickerOpen(false)}
+            selectedSlug={imageModelSlug}
+            onSelect={(m) => { setImageModelSlug(m.slug); setModelPickerOpen(false); }}
+          />
+        ) : (
+          <FalModelPickerSheet
+            kind="video"
+            open={modelPickerOpen}
+            onClose={() => setModelPickerOpen(false)}
+            selectedSlug={videoModelSlug}
+            onSelect={(m) => { setVideoModelSlug(m.slug); setModelPickerOpen(false); }}
+          />
+        )}
       </div>
     </div>
     </>
