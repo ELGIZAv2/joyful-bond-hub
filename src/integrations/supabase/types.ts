@@ -1702,6 +1702,195 @@ export type Database = {
         }
         Relationships: []
       }
+      fal_image_models: {
+        Row: {
+          created_at: string
+          credits: number
+          default_aspect: string
+          default_resolution: string
+          description: string | null
+          display_name: string
+          endpoint_image_to_image: string | null
+          endpoint_multi_reference: string | null
+          endpoint_text_to_image: string | null
+          fal_unit_cost_usd: number
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          is_new: boolean
+          is_premium: boolean
+          max_input_images: number
+          provider: string
+          slug: string
+          sort_order: number
+          supported_aspects: Json
+          supported_resolutions: Json
+          supports_multi_image: boolean
+          thumbnail_url: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          default_aspect?: string
+          default_resolution?: string
+          description?: string | null
+          display_name: string
+          endpoint_image_to_image?: string | null
+          endpoint_multi_reference?: string | null
+          endpoint_text_to_image?: string | null
+          fal_unit_cost_usd?: number
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          is_new?: boolean
+          is_premium?: boolean
+          max_input_images?: number
+          provider: string
+          slug: string
+          sort_order?: number
+          supported_aspects?: Json
+          supported_resolutions?: Json
+          supports_multi_image?: boolean
+          thumbnail_url?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          default_aspect?: string
+          default_resolution?: string
+          description?: string | null
+          display_name?: string
+          endpoint_image_to_image?: string | null
+          endpoint_multi_reference?: string | null
+          endpoint_text_to_image?: string | null
+          fal_unit_cost_usd?: number
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          is_new?: boolean
+          is_premium?: boolean
+          max_input_images?: number
+          provider?: string
+          slug?: string
+          sort_order?: number
+          supported_aspects?: Json
+          supported_resolutions?: Json
+          supports_multi_image?: boolean
+          thumbnail_url?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fal_video_models: {
+        Row: {
+          cost_per_second_usd: number | null
+          cost_per_video_usd: number | null
+          created_at: string
+          credits_per_second: number | null
+          credits_per_video: number | null
+          default_aspect: string
+          default_duration: number
+          default_resolution: string
+          description: string | null
+          display_name: string
+          endpoint_image_to_video: string | null
+          endpoint_reference_to_video: string | null
+          endpoint_start_end_frame: string | null
+          endpoint_text_to_video: string | null
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          is_new: boolean
+          is_premium: boolean
+          max_input_images: number
+          provider: string
+          slug: string
+          sort_order: number
+          supported_aspects: Json
+          supported_durations: Json
+          supported_resolutions: Json
+          supports_audio: boolean
+          supports_multi_image: boolean
+          supports_start_end_frame: boolean
+          thumbnail_url: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          cost_per_second_usd?: number | null
+          cost_per_video_usd?: number | null
+          created_at?: string
+          credits_per_second?: number | null
+          credits_per_video?: number | null
+          default_aspect?: string
+          default_duration?: number
+          default_resolution?: string
+          description?: string | null
+          display_name: string
+          endpoint_image_to_video?: string | null
+          endpoint_reference_to_video?: string | null
+          endpoint_start_end_frame?: string | null
+          endpoint_text_to_video?: string | null
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          is_new?: boolean
+          is_premium?: boolean
+          max_input_images?: number
+          provider: string
+          slug: string
+          sort_order?: number
+          supported_aspects?: Json
+          supported_durations?: Json
+          supported_resolutions?: Json
+          supports_audio?: boolean
+          supports_multi_image?: boolean
+          supports_start_end_frame?: boolean
+          thumbnail_url?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          cost_per_second_usd?: number | null
+          cost_per_video_usd?: number | null
+          created_at?: string
+          credits_per_second?: number | null
+          credits_per_video?: number | null
+          default_aspect?: string
+          default_duration?: number
+          default_resolution?: string
+          description?: string | null
+          display_name?: string
+          endpoint_image_to_video?: string | null
+          endpoint_reference_to_video?: string | null
+          endpoint_start_end_frame?: string | null
+          endpoint_text_to_video?: string | null
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          is_new?: boolean
+          is_premium?: boolean
+          max_input_images?: number
+          provider?: string
+          slug?: string
+          sort_order?: number
+          supported_aspects?: Json
+          supported_durations?: Json
+          supported_resolutions?: Json
+          supports_audio?: boolean
+          supports_multi_image?: boolean
+          supports_start_end_frame?: boolean
+          thumbnail_url?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       focus_sessions: {
         Row: {
           actual_seconds: number
