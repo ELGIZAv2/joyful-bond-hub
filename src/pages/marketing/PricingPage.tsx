@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import GlowButton from "@/components/branding/GlowButton";
 import { goBackOr } from "@/lib/navigation";
 import { WORKSPACE_PRODUCT_MAP } from "@/lib/workspacePlans";
+import SEOHead from "@/components/common/SEOHead";
 
 type PlanTier = "starter" | "pro" | "elite" | "business";
 
