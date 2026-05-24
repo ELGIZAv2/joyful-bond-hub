@@ -3,12 +3,6 @@ import { useEffect } from "react";
 import LandingNavbar from "@/components/landing/LandingNavbar";
 import LandingFooter from "@/components/landing/LandingFooter";
 import SEOHead from "@/components/common/SEOHead";
-import heroLake from "@/assets/marketing-hero-lake.jpg";
-import heroNature from "@/assets/marketing-hero-nature.jpg";
-import heroTeamWorking from "@/assets/about-team-working.jpg";
-import heroPortrait from "@/assets/marketing-hero-portrait.jpg";
-import heroCairo from "@/assets/about-cairo.jpg";
-import heroEngineer from "@/assets/about-engineer.jpg";
 
 export interface LegalSection {
   heading: string;
@@ -17,15 +11,6 @@ export interface LegalSection {
 }
 
 export type HeroVariant = "lake" | "nature" | "team" | "portrait" | "cairo" | "engineer";
-
-const heroMap: Record<HeroVariant, string> = {
-  lake: heroLake,
-  nature: heroNature,
-  team: heroTeamWorking,
-  portrait: heroPortrait,
-  cairo: heroCairo,
-  engineer: heroEngineer,
-};
 
 interface LegalPageLayoutProps {
   eyebrow: string;
