@@ -22,3 +22,5 @@ Disallow: /profile
 Disallow: /notifications
 
 Sitemap: https://megsyai.com/sitemap.xml
+Sitemap: https://megsyai.com/sitemap-media.xml
+Sitemap: https://megsyai.com/sitemap-index.xml
