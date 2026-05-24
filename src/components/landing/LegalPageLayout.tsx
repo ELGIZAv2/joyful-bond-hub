@@ -83,39 +83,53 @@ const LegalPageLayout = ({
       <SEOHead title={seoTitle} description={seoDescription} path={canonicalPath} />
       <LandingNavbar />
 
-      {/* HERO */}
-      <section className="relative overflow-hidden pt-32 pb-20 md:pt-48 md:pb-32">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.12),transparent_55%)]" />
-        <div className="mx-auto max-w-5xl px-6">
+      {/* HERO IMAGE */}
+      <section className="relative w-full overflow-hidden pt-20">
+        <div className="relative mx-auto max-w-7xl px-3 md:px-6">
+          <div className="relative h-[40vh] min-h-[280px] w-full overflow-hidden rounded-3xl md:h-[55vh] md:min-h-[420px]">
+            <img
+              src={heroSrc}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              width={1920}
+              height={1080}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/20" />
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9 }}
+              className="absolute inset-x-0 bottom-0 px-6 pb-10 md:pb-14"
+            >
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/70">
+                {eyebrow}
+              </p>
+              <h1 className="font-display text-[12vw] font-black uppercase leading-[0.9] tracking-tighter text-white drop-shadow-2xl md:text-[6.5vw]">
+                {title}
+              </h1>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* INTRO */}
+      <section className="relative pb-12 pt-12 md:pb-20 md:pt-16">
+        <div className="mx-auto max-w-3xl px-6">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="mb-6 text-xs font-semibold uppercase tracking-[0.3em] text-white/40"
-          >
-            {eyebrow}
-          </motion.p>
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.1 }}
-            className="font-display text-[14vw] font-black uppercase leading-[0.85] tracking-tighter text-white md:text-[8vw]"
-          >
-            {title}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.25 }}
-            className="mt-8 max-w-2xl text-lg leading-relaxed text-white/55 md:text-xl"
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="text-lg leading-relaxed text-white/65 md:text-xl"
           >
             {subtitle}
           </motion.p>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-10 inline-block border-l-2 border-purple-500/50 pl-4 text-xs font-mono text-white/45"
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="mt-8 inline-block border-l-2 border-white/20 pl-4 text-xs font-mono text-white/45"
           >
             Last updated: {lastUpdated}
             <br />
@@ -128,6 +142,8 @@ const LegalPageLayout = ({
             CR 248691 · Tax 774034785
           </motion.p>
         </div>
+      </section>
+
       </section>
 
       {/* SECTIONS */}
