@@ -2,8 +2,8 @@ import type { LandingContent } from "./types";
 
 const en: LandingContent = {
   meta: {
-    title: "Megsy — All-in-One AI: Chat, Slides, Research, Images, Videos & Code",
-    description: "Megsy combines 80+ AI models in one place. Chat with GPT-5 & Gemini, build slides & docs, run deep research, generate images with Nano Banana & Flux, create videos with Veo 3, and ship full-stack apps with Megsy Build.",
+    title: "Megsy AI — Chat, Slides, Images, Videos & Code",
+    description: "All-in-one AI platform: 80+ models for chat, slides, deep research, image & video generation, and full-stack app building.",
     keywords: "AI platform, ChatGPT alternative, AI image generator, AI video generator, AI slides, deep research, full-stack AI builder, Nano Banana, Flux, Veo 3",
     ogLocale: "en_US",
   },
