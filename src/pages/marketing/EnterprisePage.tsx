@@ -140,59 +140,61 @@ const EnterprisePage = () => {
   return (
     <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <SEOHead
-        title="Megsy AI for Enterprise — Custom AI at Scale"
-        description="Enterprise AI with custom models, SLAs, SSO, dedicated infra and priority support. Talk to our team about scaling Megsy AI for your org."
+        title="Megsy AI for Enterprise — Custom Plans for Teams"
+        description="Custom credit volume, team workspaces, priority support and tailored contracts for organizations using Megsy AI at scale. Talk to the founders."
         path="/enterprise"
       />
       <LandingNavbar />
 
-      {/* HERO */}
-      <section className="relative w-full overflow-hidden pt-20">
-        <div className="relative mx-auto max-w-7xl px-3 md:px-6">
-          <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden rounded-3xl md:h-[60vh] md:min-h-[460px]">
-            <img
-              src={heroTeam}
-              alt=""
-              loading="eager"
-              fetchPriority="high"
-              width={1920}
-              height={1080}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/10" />
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9 }}
-              className="absolute inset-x-0 bottom-0 px-6 pb-12 md:pb-16"
-            >
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
-                <Building2 className="h-3.5 w-3.5" />
-                Enterprise
-              </div>
-              <h1 className="font-display text-[12vw] font-black uppercase leading-[0.9] tracking-tighter text-white drop-shadow-2xl md:text-[5.5vw]">
-                AI at enterprise scale.
-              </h1>
-              <p className="mt-5 max-w-2xl text-base text-white/75 md:text-lg">
-                Custom MC allocation, dedicated infrastructure, priority processing, and enterprise-grade security for your organization.
-              </p>
-            </motion.div>
-          </div>
+      {/* HERO — landing style */}
+      <section className="relative overflow-hidden bg-background pb-12 pt-32 text-center md:pt-44">
+        <div className="mx-auto w-full max-w-4xl px-4">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground"
+          >
+            For teams
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="font-display text-[9vw] uppercase leading-[0.95] tracking-tight text-foreground md:text-[5.5vw]"
+          >
+            Megsy{" "}
+            <span className="text-primary">for your team.</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mx-auto mt-4 max-w-2xl text-[13px] leading-snug text-muted-foreground md:mt-6 md:text-lg"
+          >
+            Custom credit volume, shared workspaces, priority support and tailored contracts
+            — sized to how your team actually uses Megsy.
+          </motion.p>
         </div>
       </section>
 
-
       {/* Features Grid */}
-      <section className="py-16 md:py-24">
+      <section className="border-t border-border/30 py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
-          <motion.h2
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="font-display text-2xl font-bold text-foreground text-center mb-12"
+            transition={{ duration: 0.7 }}
+            className="mb-14 max-w-3xl"
           >
-            Everything Your Enterprise Needs
-          </motion.h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+              What's included
+            </p>
+            <h2 className="mt-4 font-display text-4xl uppercase leading-[0.95] tracking-tight text-foreground md:text-5xl">
+              Built around <span className="text-primary">your team.</span>
+            </h2>
+          </motion.div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((h, i) => (
               <motion.div
@@ -201,15 +203,14 @@ const EnterprisePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-colors hover:border-white/20 hover:bg-white/[0.04]"
+                className="rounded-2xl border border-border/30 bg-white/[0.02] p-6 transition-colors hover:border-primary/30 hover:bg-white/[0.04]"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-                  <h.icon className="h-5 w-5 text-white/80" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-border/30 bg-white/[0.04]">
+                  <h.icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 text-base font-semibold text-white">{h.title}</h3>
-                <p className="text-sm leading-relaxed text-white/55">{h.desc}</p>
+                <h3 className="mb-2 text-base font-semibold text-foreground">{h.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{h.desc}</p>
               </motion.div>
-
             ))}
           </div>
         </div>
