@@ -23,4 +23,6 @@
   <url><loc>https://megsyai.com/sign-in</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://megsyai.com/signup</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://megsyai.com/sign-up</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://megsyai.com/register</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://megsyai.com/megsy-corn</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>
