@@ -65,16 +65,8 @@ type Mode = "image" | "video";
 type Tab = "home" | "studio" | "community";
 type IconCmp = (p: { className?: string; strokeWidth?: number }) => JSX.Element;
 
-const NANO_BANANA_DEFAULT: ModelOption = {
-  id: "nano-banana",
-  name: "Nano Banana",
-  credits: "1",
-};
-const HAILUO_DEFAULT: ModelOption = {
-  id: "hailuo-2.3",
-  name: "Hailuo 2.3",
-  credits: "70",
-};
+
+
 
 
 const PLACEHOLDERS: Record<Mode, string[]> = {
