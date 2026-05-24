@@ -227,6 +227,7 @@ const GalleryPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 };
 

@@ -430,6 +430,7 @@ const ImageStudioPage = () => {
         <ImagePreviewModal url={previewUrl} onClose={() => setPreviewUrl(null)} />
       </div>
     </AppLayout>
+    </>
   );
 };
 

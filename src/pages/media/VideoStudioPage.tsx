@@ -412,6 +412,7 @@ const VideoStudioPage = () => {
         <input ref={fileInputRef} type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
       </div>
     </AppLayout>
+    </>
   );
 };
 
