@@ -736,6 +736,20 @@ const MediaHubPage = () => {
 
                     <div className="flex items-center gap-1.5 ml-auto shrink-0">
                       <button
+                        onClick={() => setModelPickerOpen(true)}
+                        className="h-10 px-3 flex items-center gap-1.5 rounded-2xl ios26-glass text-foreground/85 hover:text-foreground transition-colors text-[12px] font-semibold max-w-[160px]"
+                        aria-label="Select model"
+                      >
+                        <span className="truncate">{currentModel?.display_name ?? "Model"}</span>
+                        {currentModel && (
+                          <span className="text-[10px] font-bold text-indigo-300 tabular-nums">
+                            {mode === "image"
+                              ? `${(currentModel as any).credits} MC`
+                              : `${(currentModel as any).credits_per_second ?? (currentModel as any).credits_per_video} MC`}
+                          </span>
+                        )}
+                      </button>
+                      <button
                         ref={settingsBtnRef}
                         onClick={() => {
                           setSettingsOpen((v) => !v);
