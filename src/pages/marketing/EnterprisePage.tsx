@@ -144,7 +144,14 @@ const EnterpriseFormSection = () => {
 const EnterprisePage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Megsy AI for Enterprise — Custom AI at Scale"
+        description="Enterprise AI with custom models, SLAs, SSO, dedicated infra and priority support. Talk to our team about scaling Megsy AI for your org."
+        path="/enterprise"
+      />
       <LandingNavbar />
+
+
 
       {/* Hero */}
       <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">
