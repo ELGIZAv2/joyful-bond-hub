@@ -79,12 +79,14 @@ const ImageStudioPage = () => {
   // Pick the featured model on first load
   useEffect(() => {
     if (!selectedModel && models.length) {
-      const def = models.find(m => m.is_featured) ?? models[0];
+      const state = (location.state as any) || {};
+      const fromHub = state.modelSlug ? models.find(m => m.slug === state.modelSlug) : null;
+      const def = fromHub ?? models.find(m => m.is_featured) ?? models[0];
       setSelectedModel(def);
       setAspect(def.default_aspect);
       setResolution(def.default_resolution);
     }
-  }, [models, selectedModel]);
+  }, [models, selectedModel, location.state]);
 
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
