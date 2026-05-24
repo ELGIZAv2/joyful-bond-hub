@@ -265,6 +265,22 @@ const MediaHubPage = () => {
     scrollContainerRef.current?.scrollTo({ top: 0, left: 0 });
   }, [activeTab]);
 
+  // Sync aspect / duration defaults to the selected model
+  useEffect(() => {
+    const m: any = currentModel;
+    if (!m) return;
+    if (mode === "image") {
+      if (m.default_aspect && !m.supported_aspects?.includes(imgAspect)) setImgAspect(m.default_aspect);
+    } else {
+      if (m.default_aspect && !m.supported_aspects?.includes(vidAspect)) setVidAspect(m.default_aspect);
+      if (m.default_duration && !m.supported_durations?.map((d: number) => `${d}s`).includes(vidDuration)) {
+        setVidDuration(`${m.default_duration}s`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageModelSlug, videoModelSlug, mode]);
+
+
   useEffect(() => {
     if (!settingsOpen) return;
     const onDown = (e: Event) => {
