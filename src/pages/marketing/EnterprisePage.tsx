@@ -208,14 +208,15 @@ const EnterprisePage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="rounded-2xl border border-border/50 bg-card/30 p-6 hover:border-cyan-500/20 transition-colors group"
+                className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-colors hover:border-white/20 hover:bg-white/[0.04]"
               >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 flex items-center justify-center mb-4 group-hover:from-cyan-500/20 group-hover:to-indigo-500/20 transition-colors">
-                  <h.icon className="w-5 h-5 text-cyan-400" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+                  <h.icon className="h-5 w-5 text-white/80" />
                 </div>
-                <h3 className="text-base font-semibold text-foreground mb-2">{h.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{h.desc}</p>
+                <h3 className="mb-2 text-base font-semibold text-white">{h.title}</h3>
+                <p className="text-sm leading-relaxed text-white/55">{h.desc}</p>
               </motion.div>
+
             ))}
           </div>
         </div>
