@@ -120,26 +120,31 @@ const LandingPage = ({ locale = "en" }: LandingPageProps) => {
       <div data-theme="dark" className="min-h-screen overflow-x-hidden bg-background text-foreground">
         <LandingNavbar />
         <FlyingMegsyStar />
-        <HeroSection />
+        <main id="main">
+          <HeroSection />
+          <Suspense fallback={<SectionFallback />}>
+            <StatsMarquee />
+            
+            <HorizontalGallery />
+            <StickyFeatureTabs />
+            <MegsyChatModelsSection />
+            <ParallaxShowcase />
+            
+            <ShowcaseGallery />
+            <MegsyCodeModelsSection />
+            <CreativeBlueprintsSection />
+            <HowItWorks />
+            <PricingPreview />
+            <ReferralSection />
+            <FAQSection />
+            <CTASection />
+            <FinalHeroCTA />
+          </Suspense>
+        </main>
         <Suspense fallback={<SectionFallback />}>
-          <StatsMarquee />
-          
-          <HorizontalGallery />
-          <StickyFeatureTabs />
-          <MegsyChatModelsSection />
-          <ParallaxShowcase />
-          
-          <ShowcaseGallery />
-          <MegsyCodeModelsSection />
-          <CreativeBlueprintsSection />
-          <HowItWorks />
-          <PricingPreview />
-          <ReferralSection />
-          <FAQSection />
-          <CTASection />
-          <FinalHeroCTA />
           <LandingFooter />
         </Suspense>
+
       </div>
     </LandingContentProvider>
   );
