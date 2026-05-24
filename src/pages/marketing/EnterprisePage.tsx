@@ -115,7 +115,7 @@ const EnterpriseFormSection = () => {
         <label className="text-xs text-muted-foreground mb-1.5 block uppercase tracking-wider">Company Size</label>
         <div className="flex flex-wrap gap-2">
           {companySizes.map((size) => (
-            <button key={size} onClick={() => setCompanySize(size)} className={`px-4 py-2.5 rounded-xl text-sm border transition-colors ${companySize === size ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300" : "border-border text-muted-foreground hover:border-cyan-500/20"}`}>
+            <button key={size} onClick={() => setCompanySize(size)} className={`px-4 py-2.5 rounded-xl text-sm border transition-colors ${companySize === size ? "border-white/40 bg-white/10 text-white" : "border-white/10 text-white/60 hover:border-white/30"}`}>
               {size}
             </button>
           ))}
@@ -125,7 +125,7 @@ const EnterpriseFormSection = () => {
         <label className="text-xs text-muted-foreground mb-1.5 block uppercase tracking-wider">What do you need?</label>
         <div className="flex flex-wrap gap-2">
           {needs.map((need) => (
-            <button key={need} onClick={() => toggleNeed(need)} className={`px-3 py-2 rounded-xl text-sm border transition-colors ${selectedNeeds.includes(need) ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300" : "border-border text-muted-foreground hover:border-cyan-500/20"}`}>
+            <button key={need} onClick={() => toggleNeed(need)} className={`px-3 py-2 rounded-xl text-sm border transition-colors ${selectedNeeds.includes(need) ? "border-white/40 bg-white/10 text-white" : "border-white/10 text-white/60 hover:border-white/30"}`}>
               {need}
             </button>
           ))}
@@ -135,7 +135,7 @@ const EnterpriseFormSection = () => {
         <label className="text-xs text-muted-foreground mb-1.5 block uppercase tracking-wider">Additional Details</label>
         <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} className="w-full px-4 py-3 rounded-xl border border-border bg-secondary/30 text-sm text-foreground outline-none focus:border-primary/30 transition-colors resize-none placeholder:text-muted-foreground/50" placeholder="Tell us about your use case..." />
       </div>
-      <button onClick={handleSubmit} disabled={submitting || !companyName || !contactName || !email} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 shadow-lg shadow-cyan-500/20">
+      <button onClick={handleSubmit} disabled={submitting || !companyName || !contactName || !email} className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02] disabled:opacity-40">
         <Send className="w-4 h-4" />
         {submitting ? "Submitting..." : "Submit Inquiry"}
       </button>
