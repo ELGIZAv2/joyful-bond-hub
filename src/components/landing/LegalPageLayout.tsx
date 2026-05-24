@@ -33,9 +33,9 @@ const LegalPageLayout = ({
   seoTitle,
   seoDescription,
   canonicalPath,
-  heroVariant = "lake",
+  heroVariant: _heroVariant = "lake",
 }: LegalPageLayoutProps) => {
-  const heroSrc = heroMap[heroVariant];
+  void _heroVariant;
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) return;
