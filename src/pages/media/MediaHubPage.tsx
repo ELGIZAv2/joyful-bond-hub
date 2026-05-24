@@ -444,7 +444,7 @@ const MediaHubPage = () => {
     if (location.pathname !== target) navigate(target, { replace: true });
   };
 
-  const currentModel = mode === "image" ? imageModel : videoModel;
+  
   const tools = mode === "image" ? IMAGE_TOOLS_LIST : VIDEO_TOOLS_LIST;
   const showcase = mode === "image" ? imageShowcase : videoShowcase;
 
