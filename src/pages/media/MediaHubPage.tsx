@@ -772,24 +772,35 @@ const MediaHubPage = () => {
                         <div className="bg-popover/85 backdrop-blur-3xl backdrop-saturate-200 border border-border rounded-3xl shadow-[inset_0_1px_0_0_hsl(var(--foreground)/0.08),0_20px_60px_-20px_hsl(var(--foreground)/0.35)] p-2 max-h-[65vh] overflow-y-auto">
                           <AnimatePresence mode="wait" initial={false}>
                           {(() => {
+                            const m: any = currentModel;
+                            const modelAspects: string[] = m?.supported_aspects ?? (mode === "image"
+                              ? ["1:1", "2:3", "3:2", "4:3", "4:5", "16:9", "9:16"]
+                              : ["1:1", "16:9", "9:16"]);
+                            const modelDurations: number[] = m?.supported_durations ?? [6, 10];
+                            const modelRow = {
+                              key: "model" as const,
+                              label: "Model",
+                              value: currentModel?.display_name ?? "—",
+                            };
                             const rows = mode === "image"
                               ? [
+                                  modelRow,
                                   { key: "aspect" as const, label: "Aspect Ratio", value: imgAspect },
                                   { key: "style" as const, label: "Style", value: imgStyle },
                                   { key: "improve" as const, label: "Improve Your Prompt", value: "" },
                                 ]
                               : [
+                                  modelRow,
                                   { key: "aspect" as const, label: "Aspect Ratio", value: vidAspect },
                                   { key: "duration" as const, label: "Duration", value: vidDuration },
                                   { key: "improve" as const, label: "Improve Your Prompt", value: "" },
                                 ];
                             const subOptions: Record<string, string[]> = {
-                              aspect: mode === "image"
-                                ? ["1:1", "2:3", "3:2", "4:3", "4:5", "16:9", "9:16"]
-                                : ["1:1", "16:9", "9:16"],
+                              aspect: modelAspects,
                               style: ["Cinematic", "Creative", "Dynamic", "Fashion", "Portrait", "Stock Photo", "Vibrant", "None"],
-                              duration: ["6s", "10s"],
+                              duration: modelDurations.map(d => `${d}s`),
                             };
+
 
 
                             // Inline IMPROVE WITH AI
