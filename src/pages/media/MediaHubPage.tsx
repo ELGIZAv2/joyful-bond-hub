@@ -198,8 +198,8 @@ const ToolCard = ({
         )}
         <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/60 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-3">
-          <div className="theme-fixed text-[13.5px] font-semibold text-white leading-tight drop-shadow-sm">{tool.name}</div>
-          <div className="theme-fixed text-[11px] font-medium text-white/90 leading-snug mt-1 line-clamp-2 drop-shadow-sm">{tool.desc}</div>
+          <div className="text-[13.5px] font-semibold leading-tight drop-shadow-sm" style={{ color: 'white' }}>{tool.name}</div>
+          <div className="text-[11px] font-medium leading-snug mt-1 line-clamp-2 drop-shadow-sm" style={{ color: 'rgba(255,255,255,0.9)' }}>{tool.desc}</div>
         </div>
       </div>
     </motion.button>
