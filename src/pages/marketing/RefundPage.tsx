@@ -73,7 +73,8 @@ const sections: LegalSection[] = [
   {
     heading: "Card-Brand & Payment-Processor Compliance",
     paragraphs: [
-      "Megsy operates in full compliance with Visa Core Rules, Mastercard Rules, American Express Merchant Operating Guide, and JCB acceptance rules. Pricing is clearly disclosed before checkout, recurring billing is opt-in with cancellation available at any time from the Billing page, and 3-D Secure 2 (Strong Customer Authentication) is enforced on all eligible European transactions.",
+      "All payments on Megsy AI are processed by Dodo Payments, our PCI-DSS Level 1 merchant of record. Megsy operates in full compliance with Visa Core Rules, Mastercard Rules, American Express Merchant Operating Guide, JCB, UnionPay, and Discover acceptance rules. Pricing is clearly disclosed before checkout, recurring billing is opt-in with cancellation available at any time from the Billing page, and 3-D Secure 2 (Strong Customer Authentication) is enforced on all eligible European transactions.",
+      "Bank statements show the descriptor \"DODO * MEGSY AI\" (or the localized equivalent). For any billing question, contact support@megsyai.com before opening a dispute with your bank.",
     ],
   },
   {

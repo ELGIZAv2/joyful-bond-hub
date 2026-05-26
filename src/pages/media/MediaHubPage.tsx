@@ -119,45 +119,44 @@ const VIDEO_TOOLS_LIST: Tool[] = [
   { id: "thumbnail-generator", name: "Thumbnail", route: "/videos/tools/thumbnail-generator", Icon: ToolThumbIcon, desc: "Stunning thumbnails" },
 ];
 
-const MOCK_FEATURED_IMAGES = DEMO_IMAGE_TEMPLATES.slice(0, 12);
-const MOCK_FEATURED_VIDEOS = DEMO_VIDEO_TEMPLATES.slice(0, 12);
-const MOCK_COMMUNITY_IMAGES = DEMO_IMAGE_TEMPLATES;
-const MOCK_COMMUNITY_VIDEOS = DEMO_VIDEO_TEMPLATES;
+// Templates are loaded from `showcase_items` via Telegram bot uploads.
+const MOCK_FEATURED_IMAGES: any[] = [];
+const MOCK_FEATURED_VIDEOS: any[] = [];
 
 const modeFromPath = (p: string): Mode => (p.startsWith("/videos") ? "video" : "image");
 
 const TOOL_IMAGES: Record<string, string> = {
-  "inpaint": new URL("@/assets/tool-landing/inpaint.jpg", import.meta.url).href,
-  "clothes-changer": new URL("@/assets/tool-landing/clothes-changer.jpg", import.meta.url).href,
-  "headshot": new URL("@/assets/tool-landing/headshot.jpg", import.meta.url).href,
-  "face-swap": new URL("@/assets/tool-landing/face-swap.jpg", import.meta.url).href,
-  "bg-remover": new URL("@/assets/tool-landing/bg-remover.jpg", import.meta.url).href,
-  "cartoon": new URL("@/assets/tool-landing/cartoon.jpg", import.meta.url).href,
-  "colorizer": new URL("@/assets/tool-landing/colorizer.jpg", import.meta.url).href,
-  "retouching": new URL("@/assets/tool-landing/retouching.jpg", import.meta.url).href,
-  "remover": new URL("@/assets/tool-landing/remover.jpg", import.meta.url).href,
-  "sketch-to-image": new URL("@/assets/tool-landing/sketch-to-image.jpg", import.meta.url).href,
-  "relight": new URL("@/assets/tool-landing/relight.jpg", import.meta.url).href,
-  "character-swap": new URL("@/assets/tool-landing/character-swap.jpg", import.meta.url).href,
-  "storyboard": new URL("@/assets/tool-landing/storyboard.jpg", import.meta.url).href,
-  "hair-changer": new URL("@/assets/tool-landing/hair-changer.jpg", import.meta.url).href,
-  "avatar-generator": new URL("@/assets/tool-landing/avatar-generator.jpg", import.meta.url).href,
-  "product-photo": new URL("@/assets/tool-landing/product-photo.jpg", import.meta.url).href,
-  "logo-generator": new URL("@/assets/tool-landing/logo-generator.jpg", import.meta.url).href,
-  "perspective-correction": new URL("@/assets/tool-landing/perspective-correction.jpg", import.meta.url).href,
-  "swap-characters": new URL("@/assets/tool-landing/video-swap-v9.jpg", import.meta.url).href,
-  "talking-photo": new URL("@/assets/tool-landing/talking-photo-v9.jpg", import.meta.url).href,
-  "upscale": new URL("@/assets/tool-landing/video-upscale-v9.jpg", import.meta.url).href,
-  "auto-caption": new URL("@/assets/tool-landing/auto-caption-v9.jpg", import.meta.url).href,
-  "lip-sync": new URL("@/assets/tool-landing/lip-sync-v9.jpg", import.meta.url).href,
-  "video-extender": new URL("@/assets/tool-landing/video-extender-v9.jpg", import.meta.url).href,
-  "green-screen": new URL("@/assets/tool-landing/green-screen-v9.jpg", import.meta.url).href,
-  "video-colorizer": new URL("@/assets/tool-landing/video-colorizer-v9.jpg", import.meta.url).href,
-  "video-watermark": new URL("@/assets/tool-landing/video-watermark-v9.jpg", import.meta.url).href,
-  "video-bg-replacer": new URL("@/assets/tool-landing/video-bg-replacer-v9.jpg", import.meta.url).href,
-  "video-intro": new URL("@/assets/tool-landing/video-intro-v9.jpg", import.meta.url).href,
-  "video-denoise": new URL("@/assets/tool-landing/video-denoise-v9.jpg", import.meta.url).href,
-  "thumbnail-generator": new URL("@/assets/tool-landing/thumbnail-generator-v9.jpg", import.meta.url).href,
+  "inpaint": new URL("@/assets/tool-landing/inpaint.webp", import.meta.url).href,
+  "clothes-changer": new URL("@/assets/tool-landing/clothes-changer.webp", import.meta.url).href,
+  "headshot": new URL("@/assets/tool-landing/headshot.webp", import.meta.url).href,
+  "face-swap": new URL("@/assets/tool-landing/face-swap.webp", import.meta.url).href,
+  "bg-remover": new URL("@/assets/tool-landing/bg-remover.webp", import.meta.url).href,
+  "cartoon": new URL("@/assets/tool-landing/cartoon.webp", import.meta.url).href,
+  "colorizer": new URL("@/assets/tool-landing/colorizer.webp", import.meta.url).href,
+  "retouching": new URL("@/assets/tool-landing/retouching.webp", import.meta.url).href,
+  "remover": new URL("@/assets/tool-landing/remover.webp", import.meta.url).href,
+  "sketch-to-image": new URL("@/assets/tool-landing/sketch-to-image.webp", import.meta.url).href,
+  "relight": new URL("@/assets/tool-landing/relight.webp", import.meta.url).href,
+  "character-swap": new URL("@/assets/tool-landing/character-swap.webp", import.meta.url).href,
+  "storyboard": new URL("@/assets/tool-landing/storyboard.webp", import.meta.url).href,
+  "hair-changer": new URL("@/assets/tool-landing/hair-changer.webp", import.meta.url).href,
+  "avatar-generator": new URL("@/assets/tool-landing/avatar-generator.webp", import.meta.url).href,
+  "product-photo": new URL("@/assets/tool-landing/product-photo.webp", import.meta.url).href,
+  "logo-generator": new URL("@/assets/tool-landing/logo-generator.webp", import.meta.url).href,
+  "perspective-correction": new URL("@/assets/tool-landing/perspective-correction.webp", import.meta.url).href,
+  "swap-characters": new URL("@/assets/tool-landing/video-swap-v9.webp", import.meta.url).href,
+  "talking-photo": new URL("@/assets/tool-landing/talking-photo-v9.webp", import.meta.url).href,
+  "upscale": new URL("@/assets/tool-landing/video-upscale-v9.webp", import.meta.url).href,
+  "auto-caption": new URL("@/assets/tool-landing/auto-caption-v9.webp", import.meta.url).href,
+  "lip-sync": new URL("@/assets/tool-landing/lip-sync-v9.webp", import.meta.url).href,
+  "video-extender": new URL("@/assets/tool-landing/video-extender-v9.webp", import.meta.url).href,
+  "green-screen": new URL("@/assets/tool-landing/green-screen-v9.webp", import.meta.url).href,
+  "video-colorizer": new URL("@/assets/tool-landing/video-colorizer-v9.webp", import.meta.url).href,
+  "video-watermark": new URL("@/assets/tool-landing/video-watermark-v9.webp", import.meta.url).href,
+  "video-bg-replacer": new URL("@/assets/tool-landing/video-bg-replacer-v9.webp", import.meta.url).href,
+  "video-intro": new URL("@/assets/tool-landing/video-intro-v9.webp", import.meta.url).href,
+  "video-denoise": new URL("@/assets/tool-landing/video-denoise-v9.webp", import.meta.url).href,
+  "thumbnail-generator": new URL("@/assets/tool-landing/thumbnail-generator-v9.webp", import.meta.url).href,
 };
 
 const ToolCard = ({
@@ -352,22 +351,19 @@ const MediaHubPage = () => {
 
     if (hasFreshCache) return;
 
-    // Fallback to bundled demo templates immediately so UI never looks empty
-    setImageShowcase((prev) => (prev.length ? prev : (MOCK_FEATURED_IMAGES as any)));
-    setVideoShowcase((prev) => (prev.length ? prev : (MOCK_FEATURED_VIDEOS as any)));
-
     (async () => {
       const { data } = await supabase
-        .from("showcase_items")
+        .from("showcase_items" as any)
         .select("*")
+        .order("is_trending", { ascending: false })
+        .order("trending_at", { ascending: false, nullsFirst: false })
         .order("display_order", { ascending: true })
-        .limit(40);
+        .limit(60);
       const items = (data as any as ShowcaseItem[]) || [];
-      if (!items.length) return;
       const imgs = items.filter((i) => i.media_type !== "video").slice(0, 12);
       const vids = items.filter((i) => i.media_type === "video").slice(0, 12);
-      if (imgs.length) setImageShowcase(imgs as any);
-      if (vids.length) setVideoShowcase(vids as any);
+      setImageShowcase(imgs as any);
+      setVideoShowcase(vids as any);
       try {
         localStorage.setItem("megsy_cache_showcase_v1", JSON.stringify(items));
         localStorage.setItem("megsy_cache_showcase_v1_ts", Date.now().toString());
@@ -448,17 +444,17 @@ const MediaHubPage = () => {
 
   const loadCommunity = async () => {
     const { data } = await supabase
-      .from("showcase_items")
+      .from("showcase_items" as any)
       .select("*")
       .in("media_type", ["image", "video"])
+      .order("is_trending", { ascending: false })
+      .order("trending_at", { ascending: false, nullsFirst: false })
       .order("display_order", { ascending: true })
       .limit(120);
     const dbItems = ((data as any[]) || []).map((it) => ({ ...it, category: it.category || "All" }));
-    const demo = [...(MOCK_COMMUNITY_IMAGES as any[]), ...(MOCK_COMMUNITY_VIDEOS as any[])];
-    const merged = [...dbItems, ...demo];
-    setCommunityItems(merged as any);
+    setCommunityItems(dbItems as any);
     try {
-      localStorage.setItem("megsy_cache_community_v1", JSON.stringify(merged));
+      localStorage.setItem("megsy_cache_community_v1", JSON.stringify(dbItems));
       localStorage.setItem("megsy_cache_community_v1_ts", Date.now().toString());
     } catch {}
   };

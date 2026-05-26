@@ -21,7 +21,7 @@ import FancyButton from "@/components/branding/FancyButton";
 import type { AgentDef, AgentModel } from "@/lib/agentRegistry";
 
 import { streamChat } from "@/lib/streamChat";
-import { addActiveChatJob, removeActiveChatJob, getActiveChatJobs } from "@/lib/jobs/chatResume";
+import { addActiveChatJob, removeActiveChatJob, getActiveChatJobs, hydrateActiveChatJobs } from "@/lib/jobs/chatResume";
 import { resumeJob as resumeBgJob, failStaleJob } from "@/lib/jobs/client";
 import { getActiveWorkspaceId } from "@/lib/activeWorkspace";
 import { shouldUseWebSearch } from "@/lib/shouldUseWebSearch";
@@ -296,7 +296,7 @@ const DOCS_STATUS_FALLBACKS = [
   "Almost done…",
 ];
 
-const SLIDES_CLIENT_TIMEOUT_MS = 180_000;
+const SLIDES_CLIENT_TIMEOUT_MS = 480_000; // 8 min — slides pipeline (outline + expand + per-slide images) realistically needs 4-6 min
 const SLIDES_TIMEOUT_MESSAGE = "Slides generation took too long and was stopped safely. Please try again.";
 
 const ChatPage = () => {
@@ -314,26 +314,15 @@ const ChatPage = () => {
   const [mobileGreeting] = useState(() => Math.floor(Math.random() * 8));
   const [mobileGreetingColor] = useState(() => Math.floor(Math.random() * 8));
   // First visit = show original English playful greetings. Subsequent visits = Arabic time-of-day rotation.
-  const [isFirstVisit] = useState(() => {
-    if (typeof window === "undefined") return true;
-    try {
-      const seen = localStorage.getItem("megsy_chat_greeted");
-      if (!seen) {
-        localStorage.setItem("megsy_chat_greeted", "1");
-        return true;
-      }
-      return false;
-    } catch { return true; }
-  });
+  // Source of truth is profiles.chat_greeted (DB). We default to "returning" to avoid flashing
+  // the first-time greeting on subsequent visits while the DB lookup is in flight.
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
   const [returningGreetingIdx] = useState(() => Math.floor(Math.random() * 4));
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversationTitle, setConversationTitle] = useState("");
   const [searchEnabled, setSearchEnabled] = useState(true);
   const { mySkills, librarySkills, enabledSkills, toggleEnabled } = useSkills();
-  const [megsyTier, setMegsyTier] = useState<"lite" | "pro" | "max">(() => {
-    if (typeof window === "undefined") return "lite";
-    return (localStorage.getItem("megsy_tier") as any) || "lite";
-  });
+  const [megsyTier, setMegsyTier] = useState<"lite" | "pro" | "max">("lite");
   const [userPlan, setUserPlan] = useState<string>("free");
   const [computerUseEnabled, setComputerUseEnabled] = useState(true);
   const [chatMode, setChatMode] = useState<ChatMode>("normal");
@@ -470,7 +459,16 @@ const ChatPage = () => {
       const prefTier = (pers as any)?.preferred_tier;
       if (prefTier && ["lite", "pro", "max"].includes(prefTier)) {
         setMegsyTier(prefTier as any);
-        localStorage.setItem("megsy_tier", prefTier);
+      }
+      // Hydrate first-visit greeting flag from DB; mark it true on first ever load.
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("chat_greeted")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!(prof as any)?.chat_greeted) {
+        setIsFirstVisit(true);
+        await supabase.from("profiles").update({ chat_greeted: true } as any).eq("id", user.id);
       }
     });
   }, []);
@@ -831,6 +829,8 @@ const ChatPage = () => {
       // Source 2: same-tab localStorage entries (fallback before DB write lands).
       void (async () => {
         try {
+          // Hydrate in-memory active-jobs map from background_jobs so we can re-attach after reload.
+          await hydrateActiveChatJobs(id);
           type Entry = { jobId: string; messageId?: string; clientId?: string; userInput: string };
           const entries: Entry[] = [];
           // DB-sourced placeholders
@@ -844,7 +844,7 @@ const ChatPage = () => {
               });
             }
           }
-          // localStorage-sourced (skip ones already covered by DB)
+          // In-memory tab pointers (hydrated from background_jobs on mount)
           const localPending = getActiveChatJobs(id);
           for (const p of localPending) {
             if (entries.some((e) => e.jobId === p.jobId)) continue;
@@ -1211,6 +1211,8 @@ const ChatPage = () => {
           templateId: slidesTemplate,
           userId: chatUserId || undefined,
           background: true,
+          conversation_id: cid,
+          message_id: placeholderId,
         });
 
         // Persist the jobId onto the placeholder so refresh can resume.
@@ -1270,7 +1272,9 @@ const ChatPage = () => {
             onDelta: (_chunk, full) => {
               narrative = full;
               setMessages((prev) => prev.map((m) =>
-                m.clientId === `assistant-${localTurnId}` ? { ...m, content: narrative } : m
+                m.clientId === `assistant-${localTurnId}` || (!!placeholderId && m.id === placeholderId)
+                  ? { ...m, content: narrative }
+                  : m
               ));
             },
             onOutput: (out) => {
@@ -1284,7 +1288,7 @@ const ChatPage = () => {
                   ? { ...finalDeck, templateId: tpl.id, htmlSlug: tpl.htmlSlug, variant: tpl.variant }
                   : finalDeck;
                 setMessages((prev) => prev.map((m) =>
-                  m.clientId === `assistant-${localTurnId}`
+                  m.clientId === `assistant-${localTurnId}` || (!!placeholderId && m.id === placeholderId)
                     ? { ...m, slidesDeck: enrichedDeck, slidesJobId: undefined, mode: "slides" }
                     : m
                 ));
@@ -2347,6 +2351,46 @@ const ChatPage = () => {
       return;
     }
 
+    // Auto-resume: if the user has an in-flight background job (slides / docs /
+    // deep research) created in the last 30 minutes, jump them back to that
+    // conversation so work-in-progress doesn't "disappear" after a refresh or
+    // tab close.
+    if (!conversationId) {
+      (async () => {
+        try {
+          const user = await getCachedUser();
+          if (!user) return;
+          const cutoff = new Date(Date.now() - 30 * 60_000).toISOString();
+          const { data: jobs } = await supabase
+            .from("background_jobs")
+            .select("conversation_id, status, created_at, kind")
+            .eq("user_id", user.id)
+            .in("status", ["queued", "running"])
+            .gte("created_at", cutoff)
+            .not("conversation_id", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          let cid = (jobs as any)?.[0]?.conversation_id as string | undefined;
+          if (!cid) {
+            const { data: pendingMessages } = await supabase
+              .from("messages")
+              .select("conversation_id, metadata, created_at")
+              .eq("role", "assistant")
+              .gte("created_at", cutoff)
+              .not("conversation_id", "is", null)
+              .order("created_at", { ascending: false })
+              .limit(20);
+            cid = ((pendingMessages as any[]) || []).find((m) =>
+              ["slidesPending", "docsPending", "researchPending"].includes(String(m?.metadata?.kind || ""))
+            )?.conversation_id as string | undefined;
+          }
+          if (cid && !conversationId) loadConversation(cid);
+        } catch (e) {
+          console.warn("[auto-resume] failed", e);
+        }
+      })();
+    }
+
     const inviteToken = params.get("invite");
     if (inviteToken) {
       (async () => {
@@ -2363,16 +2407,13 @@ const ChatPage = () => {
       return;
     }
 
-    // Demo conversation on first visit
-    const demoKey = "megsy_demo_shown";
-    if (localStorage.getItem(demoKey)) return;
+    // Demo conversation on first visit — DB is source of truth (no localStorage)
     (async () => {
       const user = await getCachedUser();
       if (!user) return;
-      // Check if user has any conversations already
+      // If user already has any conversation, skip demo.
       const { count } = await supabase.from("conversations").select("id", { count: "exact", head: true }).eq("user_id", user.id);
-      if (count && count > 0) { localStorage.setItem(demoKey, "1"); return; }
-      localStorage.setItem(demoKey, "1");
+      if (count && count > 0) return;
 
       const demoUserMsg = "What is Megsy AI? Tell me everything about what you can do.";
       const demoAssistantMsg = `# Welcome to Megsy AI
@@ -3018,7 +3059,6 @@ Ask me anything to get started!`;
                           return;
                         }
                         setMegsyTier(t.id);
-                        localStorage.setItem("megsy_tier", t.id);
                         if (chatUserId) {
                           supabase.from("ai_personalization").upsert({ user_id: chatUserId, preferred_tier: t.id } as any, { onConflict: "user_id" }).then(() => {});
                         }
@@ -3725,6 +3765,7 @@ Ask me anything to get started!`;
                     onEditUserMessageAt={msg.role === "user" ? handleEditUserMessageAt : undefined}
                     isDeepResearch={msg.mode === "deep-research" && msg.role === "assistant"}
                     isSlidesMode={msg.mode === "slides" && msg.role === "assistant"}
+                    isLearningMode={msg.mode === "learning" && msg.role === "assistant"}
                     researchQuery={msg.role === "assistant" && i > 0 && messages[i - 1]?.role === "user" ? messages[i - 1].content : undefined}
                     researchSessionKey={msg.role === "assistant" && conversationId ? `conv_${conversationId}_${i}` : undefined}
                     narrations={msg.role === "assistant" && i === messages.length - 1 ? narrations : undefined}
@@ -3753,16 +3794,16 @@ Ask me anything to get started!`;
                   )}
                    {/* Slides deck card under assistant message in slides mode */}
                     {msg.role === "assistant" && msg.slidesDeck && (
-                      <div className="px-3 md:px-12">
-                        <Suspense fallback={null}>
-                          {isPremiumHtml(msg.slidesDeck.templateId) && (msg.slidesDeck as SlideDeck & { htmlSlug?: string }).htmlSlug ? (
-                            <SlidesHtmlDeckCard deck={msg.slidesDeck as SlideDeck & { htmlSlug: string }} />
-                          ) : (
-                            <SlidesDeckCard deck={msg.slidesDeck} />
-                          )}
-                        </Suspense>
-                      </div>
-                    )}
+                       <div className="px-3 md:px-12">
+                         <Suspense fallback={null}>
+                           {isPremiumHtml(msg.slidesDeck.templateId) && (msg.slidesDeck as SlideDeck & { htmlSlug?: string }).htmlSlug ? (
+                             <SlidesHtmlDeckCard deck={msg.slidesDeck as SlideDeck & { htmlSlug: string }} />
+                           ) : (
+                             <SlidesDeckCard deck={msg.slidesDeck} />
+                           )}
+                         </Suspense>
+                       </div>
+                     )}
                     {msg.role === "assistant" && msg.standardSlides && (
                       <div className="px-3 md:px-12">
                         <Suspense fallback={null}>
@@ -4283,7 +4324,7 @@ Ask me anything to get started!`;
           {slidesPickerOpen && (
             <TemplatePickerSheet
               open={slidesPickerOpen}
-              
+              showCategoryTabs
               templates={SLIDES_TEMPLATES.map((t) => ({
                 id: t.id,
                 name: t.name,

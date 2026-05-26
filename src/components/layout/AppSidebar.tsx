@@ -72,6 +72,8 @@ const AppSidebar = ({
   const showsUnifiedChatHistory = currentMode === "chat" || currentMode === "research" || currentMode === "slides";
 
   // Hydrate from local cache (user info + conversations) before network.
+  // SECURITY: never read credits / subscription / billing info from localStorage —
+  // those are sensitive values that must always come from the server.
   useEffect(() => {
     try {
       const lastUid = localStorage.getItem(lastUserKey);
@@ -81,7 +83,7 @@ const AppSidebar = ({
           const u = JSON.parse(raw);
           if (u.userName) setUserName(u.userName);
           if (u.avatarUrl !== undefined) setAvatarUrl(u.avatarUrl);
-          if (typeof u.credits === "number") setCredits(u.credits);
+          // intentionally NOT reading u.credits — credits must come from server
         }
         const conv = localStorage.getItem(cacheKey(currentMode, lastUid, activeWs));
         if (conv) {
@@ -92,6 +94,7 @@ const AppSidebar = ({
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   useEffect(() => {
     if (!showRecent || !currentUserId) return;
@@ -141,20 +144,23 @@ const AppSidebar = ({
     const fallbackName = user.user_metadata?.full_name || emailPrefix;
     setUserName(fallbackName);
     const { data: profile } = await supabase.from("profiles").select("credits, avatar_url, display_name").eq("id", user.id).single();
-    let next = { userName: fallbackName, avatarUrl: user.user_metadata?.avatar_url || null, credits: 0 };
+    let next = { userName: fallbackName, avatarUrl: user.user_metadata?.avatar_url || null };
+    let nextCredits = 0;
     if (profile) {
-      next.credits = Number(profile.credits) || 0;
+      nextCredits = Number(profile.credits) || 0;
       next.avatarUrl = profile.avatar_url || next.avatarUrl;
       if (profile.display_name) next.userName = profile.display_name;
-      setCredits(next.credits);
+      setCredits(nextCredits);
       setAvatarUrl(next.avatarUrl);
       setUserName(next.userName);
     }
     try {
       localStorage.setItem(lastUserKey, user.id);
+      // SECURITY: do NOT persist credits in localStorage.
       localStorage.setItem(userCacheKey(user.id), JSON.stringify(next));
     } catch {}
   };
+
 
   const loadConversations = async () => {
     const { data: { user } } = await supabase.auth.getUser();

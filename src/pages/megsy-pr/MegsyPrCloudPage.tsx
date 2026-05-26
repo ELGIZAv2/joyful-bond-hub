@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ChevronLeft, ArrowUpRight, Database, Cloud as CloudIcon, KeyRound,
+  ChevronLeft, Database, Cloud as CloudIcon, KeyRound,
   Users as UsersIcon, Loader2, HelpCircle, Plus, Check, RefreshCw, Link2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,52 +98,14 @@ export default function MegsyPrCloudPage() {
     if (connecting) return;
     setConnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("supabase-oauth-start", {
-        body: { redirect_to: window.location.href },
+      const { data, error } = await supabase.functions.invoke("supabase-link-manager", {
+        body: { action: "status" },
       });
-      if (error) throw error;
-      const url = data?.authorize_url;
-      if (!url) throw new Error("Missing authorize URL");
-
-      const popup = window.open(url, "supabase-oauth", "width=600,height=750");
-      if (!popup) { window.location.href = url; return; }
-      toast.success("Opening Supabase page…");
-
-      const cleanup = (timer: number, listener: (e: MessageEvent) => void) => {
-        clearInterval(timer);
-        window.removeEventListener("message", listener);
-        setConnecting(false);
-      };
-
-      const listener = async (ev: MessageEvent) => {
-        if (ev.data?.type !== "supabase-oauth") return;
-        if (ev.data.ok) {
-          setConnected(true);
-          await loadProjects();
-          toast.success("Linked to Supabase");
-        } else {
-          toast.error("Failed to link to Supabase");
-        }
-        cleanup(poll, listener);
-        try { popup.close(); } catch { /* noop */ }
-      };
-      window.addEventListener("message", listener);
-
-      const poll = window.setInterval(async () => {
-        if (popup.closed) {
-          const { data: s } = await supabase.functions.invoke("supabase-link-manager", {
-            body: { action: "status" },
-          });
-          if (s?.connected) {
-            setConnected(true);
-            await loadProjects();
-            toast.success("Linked to Supabase");
-          }
-          cleanup(poll, listener);
-        }
-      }, 1500) as unknown as number;
-
-      window.setTimeout(() => cleanup(poll, listener), 120_000);
+      if (error || data?.error) throw new Error(data?.error || "Connection failed");
+      if (!data?.connected) throw new Error("Supabase backend token is not configured");
+      setConnected(true);
+      await loadProjects();
+      toast.success("Supabase backend integration is active");
     } catch (e: any) {
       toast.error(e?.message || "Connection failed");
       setConnecting(false);
@@ -246,30 +208,22 @@ export default function MegsyPrCloudPage() {
               </div>
 
               <ul className="mt-5 space-y-1">
-                <CloudRow
-                  icon={<SupaLogo />}
-                  label={project?.linked_supabase_project_name || "Supabase Project"}
-                  href={project?.linked_supabase_url ? supabaseDashboardUrl(project.linked_supabase_project_ref!) : undefined}
-                />
+                <CloudRow icon={<SupaLogo />} label={project?.linked_supabase_project_name || "Supabase Project"} />
                 <CloudRow
                   icon={<UsersIcon className="w-5 h-5" strokeWidth={1.7} />}
                   label="User management"
-                  href={`https://supabase.com/dashboard/project/${project?.linked_supabase_project_ref}/auth/users`}
                 />
                 <CloudRow
                   icon={<Database className="w-5 h-5" strokeWidth={1.7} />}
                   label="SQL editor"
-                  href={`https://supabase.com/dashboard/project/${project?.linked_supabase_project_ref}/sql/new`}
                 />
                 <CloudRow
                   icon={<CloudIcon className="w-5 h-5" strokeWidth={1.7} />}
                   label="Edge Functions"
-                  href={`https://supabase.com/dashboard/project/${project?.linked_supabase_project_ref}/functions`}
                 />
                 <CloudRow
                   icon={<KeyRound className="w-5 h-5" strokeWidth={1.7} />}
                   label="Manage secrets"
-                  href={`https://supabase.com/dashboard/project/${project?.linked_supabase_project_ref}/settings/functions`}
                 />
               </ul>
 
@@ -288,14 +242,14 @@ export default function MegsyPrCloudPage() {
                   >
                     Unlink
                   </button>
-                  <a
-                    href="https://supabase.com/dashboard/org/_"
-                    target="_blank" rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={loadProjects}
                     className="h-10 px-4 rounded-full backdrop-blur-2xl border border-foreground/10 text-[13.5px] font-medium hover:bg-foreground/[0.06] flex items-center transition"
                     style={{ backgroundColor: "color-mix(in oklab, hsl(var(--background)) 55%, transparent)" }}
                   >
-                    Manage accounts
-                  </a>
+                    Refresh projects
+                  </button>
                 </div>
               </div>
             </section>
@@ -367,14 +321,14 @@ export default function MegsyPrCloudPage() {
               </div>
 
               <div className="mt-5 flex items-center justify-between gap-2">
-                <a
-                  href="https://supabase.com/dashboard/new/_"
-                  target="_blank" rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={loadProjects}
                   className="h-10 px-4 rounded-full backdrop-blur-2xl border border-foreground/10 text-[13.5px] font-medium hover:bg-foreground/[0.06] flex items-center gap-1.5 transition"
                   style={{ backgroundColor: "color-mix(in oklab, hsl(var(--background)) 55%, transparent)" }}
                 >
-                  <Plus className="w-4 h-4" /> Create new project
-                </a>
+                  <Plus className="w-4 h-4" /> Refresh projects
+                </button>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={disconnectAccount}
@@ -440,28 +394,16 @@ export default function MegsyPrCloudPage() {
   );
 }
 
-function CloudRow({ icon, label, href }: { icon: React.ReactNode; label: string; href?: string }) {
+function CloudRow({ icon, label }: { icon: React.ReactNode; label: string }) {
   const Inner = (
     <>
       <span className="w-7 grid place-items-center text-foreground/80 shrink-0">{icon}</span>
       <span className="flex-1 font-semibold text-[15.5px] truncate">{label}</span>
-      {href && <ArrowUpRight className="w-4 h-4 text-muted-foreground" />}
     </>
   );
   return (
     <li>
-      {href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-3 px-1 py-3 rounded-lg hover:bg-foreground/[0.04]"
-        >
-          {Inner}
-        </a>
-      ) : (
-        <div className="flex items-center gap-3 px-1 py-3">{Inner}</div>
-      )}
+      <div className="flex items-center gap-3 px-1 py-3">{Inner}</div>
     </li>
   );
 }
@@ -475,6 +417,3 @@ function SupaLogo({ size = 22 }: { size?: number }) {
   );
 }
 
-function supabaseDashboardUrl(ref: string) {
-  return `https://supabase.com/dashboard/project/${ref}`;
-}

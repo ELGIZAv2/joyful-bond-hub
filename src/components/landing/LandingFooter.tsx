@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { PaymentMethods } from "@/components/branding/PaymentMethods";
+import { DodoPaymentsBadge } from "@/components/branding/DodoPaymentsBadge";
 
 const footerLinks = {
   Create: [
@@ -180,13 +182,28 @@ const LandingFooter = () => {
           </h2>
         </motion.div>
 
+        {/* Payment methods + Dodo Payments */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+          className="mt-12 flex flex-col items-center gap-5 border-t border-white/[0.06] pt-10"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/40">
+            Secure Payments
+          </p>
+          <PaymentMethods variant="dark" />
+          <DodoPaymentsBadge variant="dark" />
+        </motion.div>
+
         {/* Bottom bar */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-6 md:flex-row"
+          className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-6 md:flex-row"
         >
           <div className="flex flex-wrap items-center gap-4 text-xs text-white/20">
             <a href="/terms" onClick={(e) => { e.preventDefault(); navigate("/terms"); }} className="hover:text-white/40 transition-colors">Terms</a>

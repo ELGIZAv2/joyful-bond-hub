@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, X, Maximize2, Download, Loader2, FileCode2, FileType2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Maximize2, Download, Loader2, FileCode2, FileType2, MoveHorizontal, MoveVertical } from "lucide-react";
 import { toast } from "sonner";
 import { exportDeckHtml, exportDeckPptx } from "@/lib/slidesExport";
 import { findSlidesTemplate } from "@/lib/slidesTemplates";
@@ -338,6 +338,40 @@ function SlideRender({ slide, palette, dir }: { slide: SlideData; palette: Slide
 const SlidesDeckCard = ({ deck }: Props) => {
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(0);
+  const [orientation, setOrientation] = useState<"horizontal" | "vertical">("horizontal");
+  const verticalScrollRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Sync idx -> scroll in vertical mode
+  useEffect(() => {
+    if (!open || orientation !== "vertical") return;
+    const el = slideRefs.current[idx];
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [idx, orientation, open]);
+
+  // Sync scroll -> idx in vertical mode
+  useEffect(() => {
+    if (!open || orientation !== "vertical") return;
+    const container = verticalScrollRef.current;
+    if (!container) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const center = container.scrollTop + container.clientHeight / 2;
+        let best = 0, bestDist = Infinity;
+        slideRefs.current.forEach((el, i) => {
+          if (!el) return;
+          const elCenter = el.offsetTop + el.offsetHeight / 2;
+          const d = Math.abs(elCenter - center);
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        setIdx(best);
+      });
+    };
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => { container.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
+  }, [open, orientation]);
   const dir: "ltr" | "rtl" = (deck.language?.startsWith("ar")) ? "rtl" : "ltr";
   const total = deck.slides.length;
 
@@ -373,35 +407,44 @@ const SlidesDeckCard = ({ deck }: Props) => {
   const cover = deck.slides[0];
   return (
     <>
-      <div className="mt-3 rounded-2xl overflow-hidden border border-border/40 bg-card max-w-xl">
+      <div className="mt-3 group relative max-w-[420px] rounded-[2rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] transition-all duration-700 hover:border-white/10">
         <button
           onClick={() => { setIdx(0); setOpen(true); }}
-          className="relative block w-full aspect-[16/9] overflow-hidden group"
+          className="relative block w-full aspect-[16/9] overflow-hidden bg-zinc-900"
           style={{ background: deck.palette.bg }}
         >
-          {cover?.image && <img src={cover.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />}
-          <div className="absolute inset-0 flex flex-col justify-end p-5" style={{ background: `linear-gradient(180deg, transparent, ${deck.palette.bg}ee)` }}>
-            <div className="text-xs font-bold uppercase tracking-[0.3em] mb-1.5" style={{ color: deck.palette.accent }}>Presentation · {total} slides</div>
-            <h3 className="text-xl md:text-2xl font-extrabold line-clamp-2" style={{ color: deck.palette.fg }}>{deck.title}</h3>
-            {deck.subtitle && <p className="text-sm opacity-80 mt-1 line-clamp-1" style={{ color: deck.palette.fg }}>{deck.subtitle}</p>}
-          </div>
-          <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/40 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-white opacity-0 group-hover:opacity-100 transition">
+          {cover?.image && <img src={cover.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 scale-110 group-hover:scale-100 transition-transform duration-1000" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-black/50 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-white opacity-0 group-hover:opacity-100 transition">
             <Maximize2 className="w-3 h-3" /> Open
           </div>
         </button>
-        <div className="flex items-center justify-between px-3 py-2 border-t border-border/40 bg-background/40 gap-2">
-          <div className="text-xs text-muted-foreground truncate min-w-0">{findSlidesTemplate(deck.templateId).name}</div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button onClick={() => { setIdx(0); setOpen(true); }} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition">
-              <Maximize2 className="w-3 h-3" />
-              Preview
+
+        <div className="px-6 pb-6 pt-4 flex flex-col gap-3">
+          <button
+            onClick={() => { setIdx(0); setOpen(true); }}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-white text-black font-semibold rounded-2xl transition-all active:scale-[0.97] hover:bg-zinc-100 shadow-lg text-[14px] tracking-tight"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Open in preview
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handlePptx}
+              disabled={exportingPptx}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 text-zinc-400 hover:text-white font-medium rounded-2xl border border-white/5 transition-all hover:bg-zinc-800 active:scale-[0.97] disabled:opacity-50 text-[13px]"
+            >
+              {exportingPptx ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              PPTX
             </button>
-            <button onClick={handlePptx} disabled={exportingPptx} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-accent/60 hover:bg-accent border border-border/40 transition disabled:opacity-50">
-              {exportingPptx ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
-              Download PPTX
-            </button>
-            <button onClick={handleHtml} disabled={exportingHtml} aria-label="HTML" title="Download HTML" className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border/60 hover:bg-muted/40 transition disabled:opacity-50">
-              {exportingHtml ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileCode2 className="w-3.5 h-3.5" />}
+            <button
+              onClick={handleHtml}
+              disabled={exportingHtml}
+              aria-label="HTML"
+              className="w-11 h-11 flex items-center justify-center bg-zinc-900 text-zinc-400 hover:text-white rounded-2xl border border-white/5 transition-all hover:bg-zinc-800 active:scale-[0.97] disabled:opacity-50"
+            >
+              {exportingHtml ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileCode2 className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -413,46 +456,86 @@ const SlidesDeckCard = ({ deck }: Props) => {
             className="fixed inset-0 z-[80] bg-black/95 backdrop-blur flex flex-col"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           >
-            <header className="flex items-center justify-between px-4 py-3">
+            <header className="flex items-center justify-between px-4 py-3 gap-2">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xs font-mono text-white/60">{idx + 1} / {total}</span>
                 <span className="text-sm font-semibold text-white truncate">{deck.title}</span>
               </div>
-              <button onClick={() => setOpen(false)} className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center rounded-full bg-white/10 p-0.5">
+                  <button
+                    onClick={() => setOrientation("horizontal")}
+                    aria-label="Horizontal scroll"
+                    title="Horizontal"
+                    className={`h-8 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition ${orientation === "horizontal" ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
+                  >
+                    <MoveHorizontal className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setOrientation("vertical")}
+                    aria-label="Vertical scroll"
+                    title="Vertical"
+                    className={`h-8 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition ${orientation === "vertical" ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
+                  >
+                    <MoveVertical className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <button onClick={() => setOpen(false)} className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </header>
 
-            <div className="flex-1 flex items-center justify-center px-3 sm:px-10 pb-4 relative">
-              <button
-                onClick={() => setIdx((i) => Math.max(0, i - 1))}
-                disabled={idx === 0}
-                className="absolute left-2 sm:left-4 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center"
-              >
-                <ChevronLeft />
-              </button>
-              <div className="relative w-full max-w-5xl aspect-[16/9] rounded-2xl overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -30 }}
-                    transition={{ duration: 0.25 }}
-                    className="absolute inset-0"
-                  >
-                    <ScaledSlide><SlideRender slide={deck.slides[idx]} palette={deck.palette} dir={dir} /></ScaledSlide>
-                  </motion.div>
-                </AnimatePresence>
+            {orientation === "horizontal" ? (
+              <div className="flex-1 flex items-center justify-center px-3 sm:px-10 pb-4 relative">
+                <button
+                  onClick={() => setIdx((i) => Math.max(0, i - 1))}
+                  disabled={idx === 0}
+                  className="absolute left-2 sm:left-4 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center z-10"
+                >
+                  <ChevronLeft />
+                </button>
+                <div className="relative w-full max-w-5xl aspect-[16/9] rounded-2xl overflow-hidden">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: 30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -30 }}
+                      transition={{ duration: 0.25 }}
+                      className="absolute inset-0"
+                    >
+                      <ScaledSlide><SlideRender slide={deck.slides[idx]} palette={deck.palette} dir={dir} /></ScaledSlide>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+                <button
+                  onClick={() => setIdx((i) => Math.min(total - 1, i + 1))}
+                  disabled={idx === total - 1}
+                  className="absolute right-2 sm:right-4 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center z-10"
+                >
+                  <ChevronRight />
+                </button>
               </div>
-              <button
-                onClick={() => setIdx((i) => Math.min(total - 1, i + 1))}
-                disabled={idx === total - 1}
-                className="absolute right-2 sm:right-4 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white flex items-center justify-center"
+            ) : (
+              <div
+                ref={verticalScrollRef}
+                className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-10 pb-4 snap-y snap-mandatory"
+                style={{ scrollBehavior: "smooth" }}
               >
-                <ChevronRight />
-              </button>
-            </div>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  {deck.slides.map((s, i) => (
+                    <div
+                      key={i}
+                      ref={(el) => { slideRefs.current[i] = el; }}
+                      className="w-full max-w-5xl aspect-[16/9] rounded-2xl overflow-hidden snap-center shrink-0"
+                    >
+                      <ScaledSlide><SlideRender slide={s} palette={deck.palette} dir={dir} /></ScaledSlide>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Filmstrip — quick navigation across slides */}
             <div className="shrink-0 border-t border-white/10 bg-black/40 backdrop-blur px-3 py-2.5 overflow-x-auto">

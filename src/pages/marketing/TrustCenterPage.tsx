@@ -36,10 +36,11 @@ const sections: LegalSection[] = [
   {
     heading: "Payments, Chargebacks & Card-Brand Compliance",
     paragraphs: [
-      "All payments are processed by PCI-DSS Level 1 certified providers. Megsy never sees, stores, or transmits full card numbers. Card descriptors on bank statements clearly identify Megsy, and every customer receives an itemised emailed receipt.",
+      "All payments on Megsy AI are processed by Dodo Payments — our PCI-DSS Level 1 certified merchant of record. Megsy never sees, stores, or transmits full card numbers. Card descriptors on bank statements clearly identify Megsy (\"DODO * MEGSY AI\"), and every customer receives an itemised emailed receipt.",
     ],
     list: [
-      "Visa, Mastercard, American Express, and JCB acceptance rules enforced.",
+      "Powered by Dodo Payments (https://dodopayments.com) — merchant of record, billing, and tax handling.",
+      "Visa, Mastercard, American Express, JCB, UnionPay, Apple Pay, Google Pay, Amazon Pay, and WeChat Pay accepted.",
       "3-D Secure 2 (PSD2 Strong Customer Authentication) on all eligible European transactions.",
       "Chargeback disputes are responded to with full evidence within 7 days; we use representment where the charge is legitimate.",
       "Customers are encouraged to contact support@megsyai.com before filing a chargeback — most disputes are resolved as refunds in under 48 hours.",

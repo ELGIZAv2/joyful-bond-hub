@@ -9,6 +9,9 @@ import GlowButton from "@/components/branding/GlowButton";
 import { goBackOr } from "@/lib/navigation";
 import { WORKSPACE_PRODUCT_MAP } from "@/lib/workspacePlans";
 import SEOHead from "@/components/common/SEOHead";
+import { UnlimitedModelsButton } from "@/components/branding/UnlimitedModelsButton";
+import { PaymentMethods } from "@/components/branding/PaymentMethods";
+import { DodoPaymentsBadge } from "@/components/branding/DodoPaymentsBadge";
 
 type PlanTier = "starter" | "pro" | "elite" | "business";
 
@@ -44,15 +47,16 @@ const PLANS: PlanCardConfig[] = [
     subText: "rgba(26,26,26,0.65)",
     monthlyPrice: 9,
     yearlyPrice: 89,
-    monthlyCredits: "80 MC / month",
-    yearlyCredits: "880 MC / year",
+    monthlyCredits: "70 MC / month",
+    yearlyCredits: "840 MC / year",
     features: [
-      "All chat models",
-      "50 images / month",
-      "5 videos / month",
-      "10 code builds / month",
+      "Unlimited chat — all models",
+      "Megsy Pro & Max included",
+      "Image generation (credit-based)",
+      "Code builder (credit-based)",
+      "Slides, Docs & Deep Research (credit-based)",
       "Deploy & publish",
-      "Standard support",
+      "24/7 support",
     ],
     ctaBg: "#000000",
     ctaText: "#FFFFFF",
@@ -68,15 +72,17 @@ const PLANS: PlanCardConfig[] = [
     subText: "rgba(255,255,255,0.75)",
     monthlyPrice: 29,
     yearlyPrice: 299,
-    monthlyCredits: "280 MC / month",
-    yearlyCredits: "2,480 MC / year",
+    monthlyCredits: "240 MC / month",
+    yearlyCredits: "2,880 MC / year",
     features: [
-      "All AI models",
-      "200 images / month",
-      "20 videos / month",
-      "40 code builds / month",
+      "Unlimited chat — all models",
+      "Unlimited image generation",
+      "Unlimited Slides, Docs & Deep Research",
+      "Video generation (credit-based)",
+      "Code builder (credit-based)",
+      "Team workspace included",
       "API access",
-      "Priority support",
+      "24/7 support",
     ],
     ctaBg: "#FFFFFF",
     ctaText: "#2563EB",
@@ -92,15 +98,15 @@ const PLANS: PlanCardConfig[] = [
     subText: "rgba(255,255,255,0.78)",
     monthlyPrice: 59,
     yearlyPrice: 599,
-    monthlyCredits: "480 MC / month",
-    yearlyCredits: "4,980 MC / year",
+    monthlyCredits: "500 MC / month",
+    yearlyCredits: "6,000 MC / year",
     features: [
-      "All models (priority speed)",
-      "500 images / month",
-      "50 videos / month",
-      "80 code builds / month",
+      "Everything in Pro",
+      "Unlimited images — priority queue",
+      "Advanced presets & custom branding",
       "API + webhooks",
-      "Dedicated support",
+      "Analytics dashboard",
+      "24/7 support",
     ],
     ctaBg: "#FFD700",
     ctaText: "#000000",
@@ -118,16 +124,14 @@ const PLANS: PlanCardConfig[] = [
     subText: "rgba(255,255,255,0.78)",
     monthlyPrice: 149,
     yearlyPrice: 1599,
-    monthlyCredits: "1,480 MC / month",
-    yearlyCredits: "12,980 MC / year",
+    monthlyCredits: "1,200 MC / month",
+    yearlyCredits: "14,400 MC / year",
     features: [
-      "All models with priority speed",
-      "2,000 images / month",
-      "200 videos / month",
-      "300 code builds / month",
+      "Everything in Elite",
       "Dedicated infrastructure",
-      "SLA guarantees",
-      "Dedicated account manager",
+      "SSO & role management",
+      "Advanced security & SLA guarantee",
+      "24/7 support",
     ],
     ctaBg: "#FFFFFF",
     ctaText: "#D97706",
@@ -156,35 +160,6 @@ const ENTERPRISE_FEATURES: string[] = [
   "Custom Contract, Invoicing & Billing",
 ];
 
-const PAYMENT_METHODS: { name: string; src: string }[] = [
-  { name: "Visa",             src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/visa.svg" },
-  { name: "Mastercard",       src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/mastercard.svg" },
-  { name: "PayPal",           src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/paypal.svg" },
-  { name: "Google Pay",       src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/google-pay.svg" },
-  { name: "Apple Pay",        src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/apple-pay.svg" },
-  { name: "American Express", src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/amex.svg" },
-  { name: "UnionPay",         src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/unionpay.svg" },
-  { name: "JCB",              src: "https://cdn.jsdelivr.net/gh/gilbarbara/logos/logos/jcb.svg" },
-];
-
-const PaymentIcons = () => (
-  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
-    {PAYMENT_METHODS.map((p) => (
-      <div
-        key={p.name}
-        title={p.name}
-        className="h-9 w-14 rounded-md bg-white ring-1 ring-black/5 shadow-sm flex items-center justify-center px-1.5 transition-shadow hover:shadow-md dark:ring-white/10"
-      >
-        <img
-          src={p.src}
-          alt={p.name}
-          loading="lazy"
-          className="max-h-5 max-w-full object-contain"
-        />
-      </div>
-    ))}
-  </div>
-);
 
 const PricingPage = () => {
   const navigate = useNavigate();
@@ -196,7 +171,7 @@ const PricingPage = () => {
     if (loadingTier) return;
     setLoadingTier(tier);
 
-    const product_id = isYearly ? PRODUCT_MAP[tier].yearly : PRODUCT_MAP[tier].monthly;
+    const interval: "monthly" | "yearly" = isYearly ? "yearly" : "monthly";
 
     // Validate session and try to refresh if expired — prevents 502 from stale tokens
     let { data: { session } } = await supabase.auth.getSession();
@@ -213,8 +188,10 @@ const PricingPage = () => {
     }
 
     try {
+      // Server resolves the actual product_id from {tier, interval} — never trust
+      // the client to choose which Dodo product to charge against.
       const { data, error } = await invokeFunction("dodo-checkout", {
-        body: { product_id, plan: tier },
+        body: { tier, interval },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) {
@@ -447,6 +424,12 @@ const PricingPage = () => {
                     {credits}
                   </p>
 
+                  {p.monthlyPrice >= 29 && (
+                    <div className="mt-4">
+                      <UnlimitedModelsButton />
+                    </div>
+                  )}
+
                   {/* CTA */}
                   <GlowButton
                     variant={p.tier as "starter" | "pro" | "elite" | "business"}
@@ -457,9 +440,12 @@ const PricingPage = () => {
                     {loadingTier === p.tier ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      "Get Started"
+                      `Get ${p.name}`
                     )}
                   </GlowButton>
+
+
+
 
                   {/* Features */}
                   <ul className="mt-6 space-y-2.5 flex-1">
@@ -547,7 +533,8 @@ const PricingPage = () => {
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="flex flex-col items-center gap-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground/70">Secure Payments</p>
-            <PaymentIcons />
+            <PaymentMethods variant="light" />
+            <DodoPaymentsBadge variant="light" className="mt-1" />
           </div>
           <div className="my-10 h-px w-full bg-border/60" />
           <div className="mx-auto max-w-3xl text-center">

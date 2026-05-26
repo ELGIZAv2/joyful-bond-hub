@@ -11,10 +11,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Maximize2, X, Download, FileCode2, ExternalLink, ArrowLeft, Share2, ChevronUp } from "lucide-react";
+import { Maximize2, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import type { SlideDeck, SlideData } from "./SlidesDeckCard";
 import { getTheme, THEMES, type ThemeId } from "@/lib/slides/themes";
+import { isStandardSlides } from "@/lib/slidesTemplates";
 
 interface Props {
   deck: SlideDeck & { htmlSlug: string; variant?: string };
@@ -366,7 +367,8 @@ function renderDigitalOasisDeck(deck: SlideDeck & { htmlSlug: string; variant?: 
   const SURFACES = ["clean", "frost", "border", "tint", "glass", "ink", "grad", "noir", "mesh", "wash"];
   const ACCENTS  = ["top", "left", "corner", "underline", "dot", "bar", "num", "ring", "slash"];
   const TONES    = ["lime", "sage", "ivory", "copper", "aqua", "violet", "rose", "gold"];
-  const LAYOUTS  = ["bento", "grid3", "grid2", "grid4", "masonry", "steps", "manifesto", "split", "split-rev", "pills", "pills-sq", "timeline", "editorial", "callouts", "mosaic", "hero-list"];
+  // Weighted: high-contrast layouts (split, manifesto, timeline, hero-list, editorial, pills) appear more often than grid/card layouts so decks don't feel like 8 card grids in a row.
+  const LAYOUTS  = ["split", "split-rev", "manifesto", "timeline", "hero-list", "editorial", "pills", "callouts", "steps", "split", "manifesto", "hero-list", "editorial", "pills-sq", "bento", "grid3", "grid2", "grid4", "masonry", "mosaic"];
   const ALIGNS   = ["left", "right", "center"];
 
   const hash = (seed: string, salt: number) => {
@@ -7631,13 +7633,83 @@ function buildDocument(rawTemplateHtml: string, deck: SlideDeck & { htmlSlug: st
 /* ------------------------------------------------------------------ */
 
 const SlidesHtmlDeckCard = ({ deck }: Props) => {
+  // Default orientation reflects the picked template's category:
+  //  - "standard" → horizontal slide-by-slide deck with nav buttons
+  //  - "premium"  → vertical landing-page scroll (current behaviour)
+  const defaultOrientation: "horizontal" | "vertical" =
+    isStandardSlides((deck as SlideDeck & { templateId?: string }).templateId) ? "horizontal" : "vertical";
+  const isStandardDeck = defaultOrientation === "horizontal";
   const [open, setOpen] = useState(false);
+  const orientation = defaultOrientation;
   const [rawHtml, setRawHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [downloadMenu, setDownloadMenu] = useState(false);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Scroll the embedded deck to a specific slide. In horizontal mode we track
+  // an explicit index so smooth + scroll-snap-stop:always doesn't get stuck
+  // between snap points (which was causing the Next button to do nothing).
+  const slideIndexRef = useRef(0);
+  const getDeckEl = (): HTMLElement | null => {
+    const win = previewIframeRef.current?.contentWindow;
+    if (!win) return null;
+    try {
+      const doc = win.document;
+      return (
+        (doc.querySelector(".lov-deck") as HTMLElement | null) ||
+        (doc.scrollingElement as HTMLElement | null) ||
+        doc.documentElement
+      );
+    } catch {
+      return null;
+    }
+  };
+  const scrollDeck = (dir: "prev" | "next") => {
+    const deckEl = getDeckEl();
+    if (!deckEl) return;
+    const isHorizontal = orientation === "horizontal";
+    const sections = deckEl.querySelectorAll<HTMLElement>(".lov-section");
+    const total = sections.length || deck.slides.length || 1;
+    const next = Math.max(0, Math.min(total - 1, slideIndexRef.current + (dir === "next" ? 1 : -1)));
+    slideIndexRef.current = next;
+    if (isHorizontal) {
+      const target = sections[next];
+      if (target && typeof target.scrollIntoView === "function") {
+        target.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+      } else {
+        const step = deckEl.clientWidth || 1;
+        deckEl.scrollTo({ left: next * step, behavior: "smooth" });
+      }
+    } else {
+      const step = deckEl.clientHeight || 1;
+      deckEl.scrollTo({ top: next * step, behavior: "smooth" });
+    }
+  };
+
+  // Listen for arrow-key / wheel events bubbled from the iframe so keyboard
+  // navigation works after the user clicks inside the preview.
+  useEffect(() => {
+    if (!open) {
+      slideIndexRef.current = 0;
+      return;
+    }
+    if (orientation !== "horizontal") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+        e.preventDefault();
+        scrollDeck("next");
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        scrollDeck("prev");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, orientation]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -7662,11 +7734,40 @@ const SlidesHtmlDeckCard = ({ deck }: Props) => {
     return buildDocument(rawHtml, deck);
   }, [rawHtml, deck]);
 
-  const portableHtml = useMemo(() => {
+  const presentationHtml = useMemo(() => {
     if (!finalHtml) return "";
+    const orientationCss = orientation === "horizontal"
+      ? `
+        html,body{height:100%!important;overflow:hidden!important;touch-action:pan-x!important;max-width:100vw!important}
+        .lov-deck{height:100vh!important;min-height:100vh!important;width:100vw!important;max-width:100vw!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x mandatory!important;scroll-behavior:smooth!important;-webkit-overflow-scrolling:touch}
+        .lov-deck::-webkit-scrollbar{display:none}
+        .lov-section{width:100vw!important;min-width:100vw!important;max-width:100vw!important;height:100vh!important;min-height:100vh!important;flex:0 0 100vw!important;scroll-snap-align:start!important;scroll-snap-stop:always!important;border-bottom:none!important;border-inline-end:1px solid color-mix(in oklab,var(--lov-fg) 8%,transparent);overflow:hidden!important;padding:5vh 5vw!important;box-sizing:border-box!important}
+        .lov-section .lov-content,.lov-section .lov-grid,.lov-section .lov-stats-grid{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+        .lov-section .lov-grid{grid-template-columns:1fr!important;gap:2vh 0!important}
+        .lov-section .lov-h1,.lov-section .lov-h2,.lov-section .lov-subtitle,.lov-section .lov-body,.lov-section .lov-quote,.lov-section .lov-bullets li,.lov-section .lov-stat-value,.lov-section .lov-cite{max-width:100%!important;overflow-wrap:break-word!important;word-break:normal!important;hyphens:auto!important;min-width:0!important}
+        /* Aggressively cap headline size so long titles never bleed past the slide edge. */
+        .lov-section .lov-h1{font-size:clamp(28px,6.4vw,72px)!important;line-height:1.08!important;letter-spacing:-0.015em!important;text-transform:none!important;transform:none!important;text-shadow:none!important}
+        .lov-section .lov-h2{font-size:clamp(24px,5.2vw,56px)!important;line-height:1.12!important;letter-spacing:-0.01em!important;text-transform:none!important;transform:none!important}
+        .lov-section .lov-subtitle{font-size:clamp(15px,2.4vw,24px)!important;line-height:1.4!important;max-width:90%!important}
+        .lov-section .lov-body,.lov-section .lov-bullets li{font-size:clamp(14px,2vw,20px)!important;line-height:1.55!important}
+        .lov-section .lov-kicker{font-size:clamp(10px,1.4vw,14px)!important;letter-spacing:0.22em!important}
+        .lov-section .lov-stat-value{font-size:clamp(32px,7vw,80px)!important;line-height:1!important}
+        .lov-section .lov-quote{font-size:clamp(20px,3.6vw,40px)!important;line-height:1.25!important}
+        .lov-section .lov-quote-mark{font-size:clamp(60px,10vw,120px)!important}
+        .lov-section .lov-media{max-height:32vh!important;aspect-ratio:16/10!important}
+        .lov-section img{max-width:100%!important;max-height:32vh!important;object-fit:cover!important}
+        .lov-section .lov-stats-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))!important;gap:1.2rem!important;margin-top:1rem!important}
+        .lov-deck .lov-section.lov-cover .lov-cover-bg{opacity:0.35!important}
+      `
+      : `html,body{overflow-x:hidden!important;overflow-y:auto!important;touch-action:pan-y!important}.lov-deck{display:block!important;overflow:visible!important}.lov-section{scroll-snap-align:start}`;
+    return finalHtml.replace("</head>", `<style id="lov-orientation-mode">${orientationCss}</style></head>`);
+  }, [finalHtml, orientation]);
+
+  const portableHtml = useMemo(() => {
+    if (!presentationHtml) return "";
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return finalHtml.replace(`<base href="/templates/`, `<base href="${origin}/templates/`);
-  }, [finalHtml]);
+    return presentationHtml.replace(`<base href="/templates/`, `<base href="${origin}/templates/`);
+  }, [presentationHtml]);
 
   const handleDownloadHtml = async () => {
     if (!portableHtml) return;
@@ -7777,22 +7878,22 @@ const SlidesHtmlDeckCard = ({ deck }: Props) => {
 
   return (
     <>
-      <div className="mt-3 rounded-2xl overflow-hidden border border-border/40 bg-card max-w-xl">
+      <div className="mt-3 group relative max-w-[420px] rounded-[2rem] overflow-hidden bg-zinc-950 border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] transition-all duration-700 hover:border-white/10">
         <button
           onClick={() => setOpen(true)}
-          className="relative block w-full aspect-[16/9] overflow-hidden group bg-background"
+          className="relative block w-full aspect-[16/9] overflow-hidden bg-zinc-900"
           style={{ containerType: "inline-size" } as React.CSSProperties}
           aria-label="Open presentation preview"
         >
           {loading || !finalHtml ? (
             <div className="absolute inset-0 flex items-center justify-center" style={{ background: deck.palette.bg }}>
-              {cover?.image && <img src={cover.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />}
+              {cover?.image && <img src={cover.image} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 scale-110 group-hover:scale-100 transition-transform duration-1000" />}
             </div>
           ) : (
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
               <iframe
                 title={`${deck.title} preview`}
-                srcDoc={finalHtml}
+                srcDoc={presentationHtml || finalHtml}
                 sandbox="allow-scripts allow-same-origin"
                 scrolling="no"
                 aria-hidden="true"
@@ -7808,17 +7909,28 @@ const SlidesHtmlDeckCard = ({ deck }: Props) => {
             </div>
           )}
 
-          <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/50 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-white opacity-0 group-hover:opacity-100 transition">
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent pointer-events-none" />
+
+          <div className="absolute top-4 right-4 inline-flex items-center gap-1 rounded-full bg-black/50 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-white opacity-0 group-hover:opacity-100 transition">
             <Maximize2 className="w-3 h-3" /> Open
           </div>
         </button>
 
-        <div className="flex items-center justify-between px-3 py-2 border-t border-border/40 bg-background/40">
-          <div />
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setOpen(true)} className="text-xs font-semibold px-3 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition">Open in preview</button>
-            <button onClick={handleOpenTab} disabled={loading} className="text-xs font-medium px-3 py-1.5 rounded-full border border-border/60 hover:bg-muted/40 transition disabled:opacity-50">Open in web</button>
-          </div>
+        <div className="px-6 pb-6 pt-4 flex flex-col gap-3">
+          <button
+            onClick={() => setOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-white text-black font-semibold rounded-2xl transition-all active:scale-[0.97] hover:bg-zinc-100 shadow-lg text-[14px] tracking-tight"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Open in preview
+          </button>
+          <button
+            onClick={handleOpenTab}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-zinc-900 text-zinc-400 hover:text-white font-medium rounded-2xl border border-white/5 transition-all hover:bg-zinc-800 active:scale-[0.97] disabled:opacity-50 text-[14px] tracking-tight"
+          >
+            Open in web
+          </button>
         </div>
       </div>
 
@@ -7839,10 +7951,13 @@ const SlidesHtmlDeckCard = ({ deck }: Props) => {
               <span className="text-sm font-semibold text-white truncate">
                 {deck.title || "—"}
               </span>
+              <span className="ms-auto rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75 shrink-0">
+                {isStandardDeck ? "العادي" : "المميز"}
+              </span>
             </header>
 
             <div className="flex-1 px-3 sm:px-6 min-h-0">
-              <div className="w-full h-full rounded-2xl overflow-hidden bg-white shadow-2xl relative overscroll-contain touch-pan-y">
+              <div className={`w-full h-full rounded-2xl overflow-hidden bg-white shadow-2xl relative overscroll-contain ${orientation === "horizontal" ? "touch-pan-x" : "touch-pan-y"}`}>
                 {loading || !finalHtml ? (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-background via-background to-muted">
                     <motion.svg
@@ -7859,11 +7974,31 @@ const SlidesHtmlDeckCard = ({ deck }: Props) => {
                   <iframe
                     ref={previewIframeRef}
                     title={deck.title}
-                    srcDoc={finalHtml}
+                    srcDoc={presentationHtml}
                     sandbox="allow-scripts allow-same-origin"
                     scrolling="yes"
-                    className="w-full h-full border-0 bg-white touch-pan-y"
+                    className={`w-full h-full border-0 bg-white ${orientation === "horizontal" ? "touch-pan-x" : "touch-pan-y"}`}
                   />
+                )}
+
+                {/* Slide nav buttons — visible in horizontal "standard" mode */}
+                {!loading && finalHtml && orientation === "horizontal" && (
+                  <>
+                    <button
+                      onClick={() => scrollDeck("prev")}
+                      aria-label="Previous slide"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-black/55 hover:bg-black/75 backdrop-blur text-white flex items-center justify-center shadow-lg transition"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => scrollDeck("next")}
+                      aria-label="Next slide"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-black/55 hover:bg-black/75 backdrop-blur text-white flex items-center justify-center shadow-lg transition"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>

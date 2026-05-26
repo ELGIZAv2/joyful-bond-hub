@@ -1,5 +1,14 @@
-// Dodo Payments webhook handler — verifies signature and processes events
-// Uses Standard Webhooks spec (Svix-compatible)
+// Dodo Payments webhook handler — verifies Standard-Webhooks signature
+// and credits the matching workspace.
+//
+// Hardening:
+//  - Strict signature verification (rejects on failure).
+//  - Idempotent: a topup row keyed on the provider invoice is inserted
+//    only once. Repeated webhook deliveries are ignored.
+//  - Credit grant aligned with the public pricing page:
+//      starter:70 / pro:240 / elite:500 / business:1200 MC per monthly cycle.
+//      Yearly cycles grant 12× that amount.
+//  - Plan downgrade on cancel/expire/fail.
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -8,6 +17,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+type Tier = "starter" | "pro" | "elite" | "business";
+const MONTHLY_CREDITS: Record<Tier, number> = {
+  starter: 70,
+  pro: 240,
+  elite: 500,
+  business: 1200,
+};
+
+function isTier(v: unknown): v is Tier {
+  return v === "starter" || v === "pro" || v === "elite" || v === "business";
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -23,20 +44,24 @@ Deno.serve(async (req) => {
     "webhook-timestamp": req.headers.get("webhook-timestamp") || "",
   };
 
+  if (!headers["webhook-id"] || !headers["webhook-signature"] || !headers["webhook-timestamp"]) {
+    return new Response("missing webhook headers", { status: 400 });
+  }
+
   let event: any;
   try {
-    // Dodo uses Standard Webhooks. Secret may already be base64; if not, encode it.
+    // Dodo signs with the Standard Webhooks spec. The secret may be raw or base64.
     const base64Secret = /^[A-Za-z0-9+/=]+$/.test(secret) && secret.length % 4 === 0
       ? secret
       : btoa(secret);
     const wh = new Webhook(base64Secret);
     event = wh.verify(rawBody, headers);
   } catch (e) {
-    console.error("Signature verification failed", e);
+    console.error("[dodo-webhook] signature verification failed", e);
     return new Response("invalid signature", { status: 401 });
   }
 
-  console.log("Dodo webhook event:", event.type, JSON.stringify(event.data).slice(0, 500));
+  console.log("[dodo-webhook] event", event.type);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -44,48 +69,99 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const type = event.type as string;
+    const type = String(event.type || "");
     const data = event.data || {};
     const metadata = data.metadata || {};
-    const userId = metadata.user_id as string | undefined;
-    const plan = metadata.plan as string | undefined;
+    const userId = typeof metadata.user_id === "string" ? metadata.user_id : undefined;
+    const tierRaw = (metadata.tier ?? metadata.plan) as unknown;
+    const tier: Tier | undefined = isTier(tierRaw) ? tierRaw : undefined;
+    const interval = metadata.interval === "yearly" ? "yearly" : "monthly";
 
-    // Map plan → MC credits per cycle
-    const PLAN_CREDITS: Record<string, number> = {
-      starter: 80, pro: 280, elite: 480, business: 1480,
-    };
+    // Stable invoice key for idempotency — first non-empty wins.
+    const invoiceKey: string =
+      data.invoice_number ||
+      data.payment_id ||
+      data.subscription_id ||
+      data.id ||
+      headers["webhook-id"];
 
-    if (type === "payment.succeeded" || type === "subscription.active" || type === "subscription.renewed") {
-      if (userId && plan && PLAN_CREDITS[plan]) {
-        // Find user's primary workspace
-        const { data: ws } = await supabase
-          .from("workspaces")
-          .select("id, credits")
-          .eq("owner_id", userId)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
+    const grantedEvents = new Set([
+      "payment.succeeded",
+      "subscription.active",
+      "subscription.renewed",
+    ]);
+    const cancelEvents = new Set([
+      "subscription.cancelled",
+      "subscription.canceled",
+      "subscription.expired",
+      "subscription.failed",
+      "payment.failed",
+    ]);
 
-        if (ws) {
-          const add = PLAN_CREDITS[plan];
-          await supabase
-            .from("workspaces")
-            .update({ credits: Number(ws.credits || 0) + add, plan } as any)
-            .eq("id", ws.id);
-
-          await supabase.from("workspace_credit_topups").insert({
-            workspace_id: ws.id,
-            amount_credits: add,
-            amount_usd: data.total_amount ? Number(data.total_amount) / 100 : 0,
-            status: "paid",
-            invoice_number: data.invoice_number || data.payment_id || data.id || `DODO-${Date.now()}`,
-            provider: "dodo",
-          } as any);
-        }
+    if (grantedEvents.has(type)) {
+      if (!userId || !tier) {
+        console.warn("[dodo-webhook] missing user_id or tier in metadata", { userId, tier });
+        return new Response(JSON.stringify({ received: true, skipped: "missing_metadata" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-    }
 
-    if (type === "subscription.cancelled" || type === "subscription.expired" || type === "subscription.failed") {
+      // Idempotency — bail if we already credited this invoice.
+      const { data: existing } = await supabase
+        .from("workspace_credit_topups")
+        .select("id")
+        .eq("invoice_number", invoiceKey)
+        .maybeSingle();
+      if (existing) {
+        console.log("[dodo-webhook] duplicate event ignored", invoiceKey);
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Locate the user's primary workspace.
+      const { data: ws, error: wsErr } = await supabase
+        .from("workspaces")
+        .select("id, credits")
+        .eq("owner_id", userId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (wsErr || !ws) {
+        console.error("[dodo-webhook] workspace not found for user", userId, wsErr);
+        return new Response(JSON.stringify({ received: true, skipped: "no_workspace" }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const cycleMultiplier = interval === "yearly" ? 12 : 1;
+      const add = MONTHLY_CREDITS[tier] * cycleMultiplier;
+
+      const { error: upErr } = await supabase
+        .from("workspaces")
+        .update({ credits: Number(ws.credits || 0) + add, plan: tier } as any)
+        .eq("id", ws.id);
+      if (upErr) console.error("[dodo-webhook] workspace update failed", upErr);
+
+      const { error: insErr } = await supabase.from("workspace_credit_topups").insert({
+        workspace_id: ws.id,
+        initiated_by: userId,
+        amount_credits: add,
+        amount_usd: typeof data.total_amount === "number" ? data.total_amount / 100 : 0,
+        status: "paid",
+        invoice_number: invoiceKey,
+        metadata: {
+          provider: "dodo",
+          event_type: type,
+          tier,
+          interval,
+          subscription_id: data.subscription_id ?? null,
+          payment_id: data.payment_id ?? null,
+        },
+      } as any);
+      if (insErr) console.error("[dodo-webhook] topup insert failed", insErr);
+    } else if (cancelEvents.has(type)) {
       if (userId) {
         await supabase
           .from("workspaces")
@@ -98,7 +174,10 @@ Deno.serve(async (req) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("webhook handler error", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500 });
+    console.error("[dodo-webhook] handler error", e);
+    // Return 200 to avoid Dodo infinite retry on a server bug, while still logging.
+    return new Response(JSON.stringify({ received: true, error: (e as Error).message }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

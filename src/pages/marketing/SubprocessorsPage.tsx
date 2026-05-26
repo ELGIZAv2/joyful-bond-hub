@@ -34,11 +34,13 @@ const sections: LegalSection[] = [
   },
   {
     heading: "Payments",
+    paragraphs: [
+      "All checkout, recurring billing, tax handling, and payout flows on Megsy AI are processed by Dodo Payments — our merchant of record. Megsy never sees, stores, or transmits full card numbers; payment data is handled exclusively by Dodo Payments' PCI-DSS Level 1 certified infrastructure.",
+    ],
     list: [
-      "PayPal Holdings, Inc. — card and PayPal payments (planned).",
-      "Payoneer Inc. — global payouts (planned).",
+      "Dodo Payments (Dodo Inc.) — merchant of record, card processing, recurring billing, tax compliance, payouts. https://dodopayments.com",
+      "Payoneer Inc. — supplemental global payouts (planned).",
       "NowPayments — cryptocurrency payments (planned).",
-      "FastSpring, Inc. — merchant of record for global tax handling (planned).",
     ],
   },
   {

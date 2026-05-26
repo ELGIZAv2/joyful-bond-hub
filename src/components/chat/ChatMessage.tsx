@@ -6,6 +6,7 @@ import {
 import { Copy, ThumbsUp, ThumbsDown, Check, Play, FileUp, Share2, Pencil, Type, Ellipsis, Link2, ChevronDown, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { motion, AnimatePresence } from "framer-motion";
+import MegsyStar from "@/components/files/MegsyStar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -48,6 +49,7 @@ interface ChatMessageProps {
   onEditUserMessageAt?: (index: number, text: string) => void;
   isDeepResearch?: boolean;
   isSlidesMode?: boolean;
+  isLearningMode?: boolean;
   researchQuery?: string;
   researchSessionKey?: string;
   narrations?: string[];
@@ -503,7 +505,7 @@ const UserMarkdown = ({ content, onLinkClick }: { content: string; onLinkClick: 
   </ReactMarkdown>
 );
 
-const ChatMessage = ({ role, content, messageIndex, isStreaming, isThinking, images, products, attachedImages, attachedFiles, onLike, onLikeMessage, liked, onShare, onStructuredAction, searchStatus, onEditUserMessage, onEditUserMessageAt, isDeepResearch, isSlidesMode, researchQuery, researchSessionKey, narrations, senderName, senderAvatar, isOtherMember, bubbleColor, messageId, reactions, onToggleReaction, currentUserId, readers, showReaders, bottomSlot, hideActions }: ChatMessageProps) => {
+const ChatMessage = ({ role, content, messageIndex, isStreaming, isThinking, images, products, attachedImages, attachedFiles, onLike, onLikeMessage, liked, onShare, onStructuredAction, searchStatus, onEditUserMessage, onEditUserMessageAt, isDeepResearch, isSlidesMode, isLearningMode, researchQuery, researchSessionKey, narrations, senderName, senderAvatar, isOtherMember, bubbleColor, messageId, reactions, onToggleReaction, currentUserId, readers, showReaders, bottomSlot, hideActions }: ChatMessageProps) => {
   const [copied, setCopied] = useState(false);
   const [slidesInfoOpen, setSlidesInfoOpen] = useState(true);
   const [researchDraftOpen, setResearchDraftOpen] = useState(true);
@@ -852,7 +854,7 @@ const ChatMessage = ({ role, content, messageIndex, isStreaming, isThinking, ima
             </div>
           )}
 
-          {hasLearnCards(content) && !isStreaming ? (
+          {isLearningMode && hasLearnCards(content) && !isStreaming ? (
             <div className="space-y-3">
               <Suspense fallback={null}>
                 {parseLearnSegments(content).map((seg, idx) => {
@@ -903,112 +905,20 @@ const ChatMessage = ({ role, content, messageIndex, isStreaming, isThinking, ima
             // While a deep-research report is still streaming, wrap the live text
             // in a simple "live draft" box so it doesn't look like the final answer.
             const inner = (
-              <div dir={langDir(al)} lang={al === "ar" ? "ar" : al === "en" ? "en" : undefined} className={`prose-chat text-foreground lang-${al} ${showSlidesInfoBox ? "slides-info-prose" : ""}`}>
+              <div dir={langDir(al)} lang={al === "ar" ? "ar" : al === "en" ? "en" : undefined} className={`prose-chat text-foreground lang-${al}`}>
                 <MarkdownRenderer content={displayContent} onLinkClick={handleLinkClick} onPreviewCode={handlePreviewCode} />
               </div>
             );
             if (showSlidesInfoBox) {
-              const isAr = al === "ar";
-              const outline = parseSlidesOutline(displayContent);
-              const hasSteps = outline.steps.length > 0;
-              const lastStepIdx = outline.steps.length - 1;
               return (
-                <div className="slides-info-box rounded-2xl border border-border/40 bg-card/40 backdrop-blur-xl overflow-hidden shadow-2xl shadow-primary/5" dir={langDir(al)}>
-                  <button
-                    type="button"
-                    onClick={() => setSlidesInfoOpen((v) => !v)}
-                    className="w-full flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border/30 bg-foreground/[0.01] hover:bg-foreground/[0.03] transition"
-                  >
-                    <span className="flex items-center gap-3 min-w-0">
-                      <span className="text-[13px] font-medium text-foreground/90 tracking-wide truncate">
-                        {"Presentation outline"}
+                <div className="space-y-2" dir={langDir(al)}>
+                  <div className="relative">
+                    {inner}
+                    {isStreaming && (
+                      <span className="inline-flex ms-1 align-baseline">
+                        <MegsyStar size={14} />
                       </span>
-                      {hasSteps && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-foreground/10 text-foreground/60 shrink-0">
-                          {outline.steps.length}
-                        </span>
-                      )}
-                    </span>
-                    <ChevronDown className={`w-[18px] h-[18px] text-muted-foreground/60 transition-transform ${slidesInfoOpen ? "" : "-rotate-90"}`} />
-                  </button>
-                  <AnimatePresence initial={false}>
-                    {slidesInfoOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="slides-info-scroll p-5 space-y-5">
-                          {hasSteps ? (
-                            <>
-                              {outline.intro && (
-                                <p className="text-[13px] leading-relaxed text-muted-foreground/90">{outline.intro}</p>
-                              )}
-                              <div className="space-y-1.5">
-                                {outline.steps.map((step, i) => {
-                                  const isActive = i === lastStepIdx;
-                                  return (
-                                    <div
-                                      key={i}
-                                      className={`group flex items-center gap-4 px-3 py-2.5 rounded-xl transition-colors ${
-                                        isActive
-                                          ? "bg-primary/10 border border-primary/20"
-                                          : "hover:bg-foreground/[0.02]"
-                                      }`}
-                                    >
-                                      <span
-                                        className={`text-[11px] font-mono shrink-0 ${
-                                          isActive ? "text-primary" : "text-muted-foreground/50 group-hover:text-muted-foreground"
-                                        }`}
-                                      >
-                                        {String(i + 1).padStart(2, "0")}
-                                      </span>
-                                      <span
-                                        className={`text-[13px] flex-1 min-w-0 truncate ${
-                                          isActive ? "text-foreground font-medium" : "text-foreground/80"
-                                        }`}
-                                      >
-                                        {step.title}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          ) : null}
-                          <button
-                            type="button"
-                            onClick={() => setSummaryOpen((v) => !v)}
-                            className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-border/30 bg-foreground/[0.02] hover:bg-foreground/[0.04] transition"
-                          >
-                            <span className="text-[13px] font-medium text-foreground/80">
-                              {summaryOpen ? "Hide full text" : "Show full text"}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${summaryOpen ? "" : "-rotate-90"}`} />
-                          </button>
-                          <AnimatePresence initial={false}>
-                            {summaryOpen && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="pt-1">
-                                  {inner}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </motion.div>
                     )}
-                  </AnimatePresence>
-                  <div className="h-[2px] w-full bg-foreground/[0.05] overflow-hidden relative">
-                    <div className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-primary to-transparent animate-slides-shimmer" />
                   </div>
                 </div>
               );

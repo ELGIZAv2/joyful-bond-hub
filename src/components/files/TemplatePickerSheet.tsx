@@ -20,7 +20,7 @@ interface Props {
   selectedId?: string;
   onSelect: (t: PickerTemplate) => void;
   onClose: () => void;
-  /** Show the Premium / Standard tabs (slides only). */
+  /** Show the Normal / Featured tabs (slides only). */
   showCategoryTabs?: boolean;
 }
 
@@ -43,10 +43,15 @@ function gradientFor(id: string): string {
 const TemplatePickerSheet = ({
   open, templates, selectedId, onSelect, onClose, showCategoryTabs,
 }: Props) => {
-  const [tab, setTab] = useState<PickerCategory>("premium");
+  const [tab, setTab] = useState<PickerCategory>("standard");
   const [pendingId, setPendingId] = useState<string | undefined>(selectedId);
 
-  useEffect(() => { if (open) setPendingId(selectedId); }, [open, selectedId]);
+  useEffect(() => {
+    if (!open) return;
+    setPendingId(selectedId);
+    const selected = templates.find((t) => t.id === selectedId);
+    setTab(selected?.category || "standard");
+  }, [open, selectedId, templates]);
 
   // ESC to close (desktop UX)
   useEffect(() => {
@@ -100,8 +105,8 @@ const TemplatePickerSheet = ({
               </div>
               {showCategoryTabs && (
                 <div className="mt-2 flex items-center gap-1 p-1 rounded-2xl bg-muted/60 max-w-md mx-auto">
-                  <button onClick={() => setTab("premium")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>Premium</button>
-                  <button onClick={() => setTab("standard")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "standard" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>Standard</button>
+                  <button onClick={() => setTab("standard")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "standard" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>العادي</button>
+                  <button onClick={() => setTab("premium")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>المميز</button>
                 </div>
               )}
             </header>
@@ -172,13 +177,13 @@ const TemplatePickerSheet = ({
                 {showCategoryTabs && (
                   <div className="mt-5 inline-flex items-center gap-1 p-1 rounded-full bg-muted/60">
                     <button
-                      onClick={() => setTab("premium")}
-                      className={`px-5 h-8 rounded-full text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >Premium</button>
-                    <button
                       onClick={() => setTab("standard")}
                       className={`px-5 h-8 rounded-full text-xs font-semibold transition ${tab === "standard" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >Standard</button>
+                    >العادي</button>
+                    <button
+                      onClick={() => setTab("premium")}
+                      className={`px-5 h-8 rounded-full text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                    >المميز</button>
                   </div>
                 )}
               </header>

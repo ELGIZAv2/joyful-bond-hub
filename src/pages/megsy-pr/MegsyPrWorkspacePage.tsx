@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { ArrowLeft, ArrowUp, Loader2, FileCode, Eye, Code2, Sparkles, Rocket, ExternalLink, Globe, Save, History, RotateCcw, Upload, Github, Download, Database, Check, Unlink, Smartphone, Tablet, Monitor, DollarSign, X, FileDiff, MousePointerClick, ShieldCheck, Brain, BarChart3, AlertTriangle, CheckCircle2, Menu, Settings as SettingsIcon, LogOut, Pencil, Coins } from "lucide-react";
+import { ArrowLeft, ArrowUp, Loader2, FileCode, Eye, Code2, Sparkles, Rocket, Globe, Save, History, RotateCcw, Upload, Github, Download, Database, Check, Unlink, Smartphone, Tablet, Monitor, DollarSign, X, FileDiff, MousePointerClick, ShieldCheck, Brain, BarChart3, AlertTriangle, CheckCircle2, Menu, Settings as SettingsIcon, LogOut, Pencil, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { prepareProjectFilesForDeploy } from "@/lib/projectBuildGuards";
@@ -11,6 +11,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import MobileChatView from "@/components/megsy-pr/MobileChatView";
 import MobilePreviewView from "@/components/megsy-pr/MobilePreviewView";
 import AppSidebar from "@/components/layout/AppSidebar";
+import { getProjectDraft, saveProjectDraftDebounced } from "@/lib/projectDrafts";
+
+// In-memory active job tracker (DB `background_jobs` is source of truth; this is just a fast lookup).
+const buildAgentActiveJobs = new Map<string, string>();
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -38,10 +42,7 @@ export default function MegsyPrWorkspacePage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [files, setFiles] = useState<BuildFile[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
-  const [input, setInput] = useState(() => {
-    if (typeof window === "undefined") return "";
-    try { return localStorage.getItem(`draft:${window.location.pathname}`) || ""; } catch { return ""; }
-  });
+  const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [step, setStep] = useState<string>("");
   const [tab, setTab] = useState<"preview" | "code" | "console" | "github" | "snapshots" | "cost" | "visits" | "supabase" | "domains" | "versions" | "visual">("preview");
@@ -126,19 +127,21 @@ export default function MegsyPrWorkspacePage() {
   // Preview is served from Cloudflare (deploy("preview")) instead of the e2b sandbox.
   // E2B sandbox auto-start is intentionally disabled here.
 
-  // Persist draft input per project (never lose what user typed)
+  // Persist draft input per project to Supabase (debounced)
   useEffect(() => {
     if (!projectId) return;
-    try { localStorage.setItem(`draft:${projectId}`, input); } catch { /* noop */ }
+    saveProjectDraftDebounced(projectId, input);
   }, [input, projectId]);
 
-  // Restore draft when project changes
+  // Restore draft from Supabase when project changes
   useEffect(() => {
     if (!projectId) return;
-    try {
-      const saved = localStorage.getItem(`draft:${projectId}`);
-      if (saved && !input) setInput(saved);
-    } catch { /* noop */ }
+    let cancelled = false;
+    (async () => {
+      const saved = await getProjectDraft(projectId);
+      if (!cancelled && saved && !input) setInput(saved);
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
@@ -176,7 +179,7 @@ export default function MegsyPrWorkspacePage() {
     let unsub: (() => void) | null = null;
     (async () => {
       let jobId: string | null = null;
-      try { jobId = localStorage.getItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+      jobId = buildAgentActiveJobs.get(projectId) ?? null;
       // Cross-device fallback: look up an active code_build job for this project in the DB.
       if (!jobId) {
         try {
@@ -187,14 +190,14 @@ export default function MegsyPrWorkspacePage() {
           });
           if (match) {
             jobId = match.id;
-            try { localStorage.setItem(`buildAgent:activeJob:${projectId}`, jobId); } catch { /* ignore */ }
+            buildAgentActiveJobs.set(projectId, jobId);
           }
         } catch { /* ignore */ }
       }
       if (!jobId) return;
       const row = await getJob(jobId).catch(() => null);
       if (!row || row.status === "done" || row.status === "error" || row.status === "canceled") {
-        try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+        buildAgentActiveJobs.delete(projectId);
         await reloadFiles();
         return;
       }
@@ -233,7 +236,7 @@ export default function MegsyPrWorkspacePage() {
           }
         },
         onDone: () => {
-          try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+          buildAgentActiveJobs.delete(projectId);
           setStreaming(false);
           setStep("");
           setMessages((m) => {
@@ -245,14 +248,14 @@ export default function MegsyPrWorkspacePage() {
           void reloadFiles();
         },
         onError: (msg) => {
-          try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+          buildAgentActiveJobs.delete(projectId);
           setStreaming(false);
           setStep("");
           toast.error(msg);
         },
         onStale: async (row) => {
           const msg = "The coding agent stopped before finishing. Conversation and files were saved — press Send to resume the same project.";
-          try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+          buildAgentActiveJobs.delete(projectId);
           await failStaleJob(row.id, msg);
           setStreaming(false);
           setStep("");
@@ -335,7 +338,7 @@ export default function MegsyPrWorkspacePage() {
         auto_fix_error: autoFixError,
         background: true,
       });
-      try { localStorage.setItem(`buildAgent:activeJob:${projectId}`, jobId); } catch { /* ignore */ }
+      buildAgentActiveJobs.set(projectId, jobId);
 
       let consumedEvents = 0;
       await new Promise<void>((resolve) => {
@@ -350,7 +353,7 @@ export default function MegsyPrWorkspacePage() {
             }
           },
           onDone: () => {
-            try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+            buildAgentActiveJobs.delete(projectId);
             setMessages((m) => {
               const copy = [...m];
               const last = copy[copy.length - 1];
@@ -378,7 +381,7 @@ export default function MegsyPrWorkspacePage() {
             resolve();
           },
           onError: (msg) => {
-            try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+            buildAgentActiveJobs.delete(projectId);
             toast.error(msg);
             setMessages((m) => m.filter((x) => !x.pending));
             unsub();
@@ -386,7 +389,7 @@ export default function MegsyPrWorkspacePage() {
           },
           onStale: async (row) => {
             const msg = "The coding agent stopped before finishing. Conversation and files were saved — you can resume from the same project.";
-            try { localStorage.removeItem(`buildAgent:activeJob:${projectId}`); } catch { /* ignore */ }
+            buildAgentActiveJobs.delete(projectId);
             await failStaleJob(row.id, msg);
             toast.error(msg);
             setMessages((m) => m.filter((x) => !x.pending));
@@ -1602,10 +1605,10 @@ function GitHubPanel({ projectId, projectName, files, onImported }: GitHubPanelP
       const filesObj: Record<string, string> = {};
       files.forEach((f) => { filesObj[f.path] = f.content; });
       const { data, error } = await supabase.functions.invoke("github-push", {
-        body: { user_id: user.id, project_name: projectName || "megsy-app", description: "Built with Megsy AI", files: filesObj },
+        body: { action: "push", project_id: projectId, project_name: projectName || "megsy-app", description: "Built with Megsy AI", files: filesObj },
       });
       if (error) throw error;
-      toast.success("Uploaded successfully", { description: data?.repo_url, action: data?.repo_url ? { label: "Open", onClick: () => window.open(data.repo_url, "_blank") } : undefined });
+      toast.success("GitHub synced successfully", { description: data?.repo_url || "Repository updated from the backend integration" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally { setBusy(null); }
@@ -1713,32 +1716,11 @@ function SupabaseConnectionPanel({ projectId, linkedProjectName, linkedProjectRe
   const startOAuth = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/supabase-oauth-start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({}),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error);
-      const popup = window.open(data.authorize_url, "supabase-oauth", "width=600,height=750");
-      const listener = (ev: MessageEvent) => {
-        if (ev.data?.type === "supabase-oauth") {
-          window.removeEventListener("message", listener);
-          if (ev.data.ok) {
-            toast.success("Supabase account linked");
-            checkStatus();
-          } else toast.error("Failed to link Supabase account");
-        }
-      };
-      window.addEventListener("message", listener);
-      // Fallback polling in case popup closes without postMessage
-      const t = setInterval(async () => {
-        if (popup?.closed) {
-          clearInterval(t);
-          await checkStatus();
-        }
-      }, 1500);
+      const r = await callApi("status");
+      setConnected(!!r.connected);
+      if (!r.connected) throw new Error(r.error || "Supabase backend token is not configured");
+      await loadProjects();
+      toast.success("Supabase backend integration is active");
     } catch (e) { toast.error(String((e as Error).message)); }
     finally { setLoading(false); }
   };
@@ -1799,15 +1781,15 @@ function SupabaseConnectionPanel({ projectId, linkedProjectName, linkedProjectRe
             {connected === false && (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Link your Supabase account so the AI can create tables and a database on your account directly.
+                  Supabase will be connected through the backend token, without opening an external dashboard.
                 </p>
                 <button
                   onClick={startOAuth}
                   disabled={loading}
                   className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium inline-flex items-center justify-center gap-2 transition"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
-                  Link Supabase account
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                  Use backend integration
                 </button>
               </div>
             )}
@@ -1834,7 +1816,7 @@ function SupabaseConnectionPanel({ projectId, linkedProjectName, linkedProjectRe
 
                 {projects && (
                   <div className="max-h-72 overflow-y-auto space-y-1.5">
-                    {projects.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No projects. Create one at dashboard.supabase.com</p>}
+                    {projects.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No projects found from the backend integration</p>}
                     {projects.map((p) => (
                       <button
                         key={p.id}

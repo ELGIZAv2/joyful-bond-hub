@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Github, Database, Check, Loader2, X, ExternalLink, Plus } from "lucide-react";
+import { Github, Database, Check, Loader2, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,15 +34,20 @@ const ConnectIntegrationsSheet = ({ open, onClose, userId, projectId }: Props) =
 
   const loadStatus = async () => {
     if (!userId) return;
-    const { data } = await supabase
-      .from("code_integrations")
-      .select("provider, config")
-      .eq("user_id", userId);
     const next: IntegStatus = {};
-    (data || []).forEach((row) => {
-      if (row.provider === "github") next.github = row.config as any;
-      if (row.provider === "supabase") next.supabase = row.config as any;
-    });
+    const [githubStatus, supabaseStatus] = await Promise.all([
+      supabase.functions.invoke("github-push", { body: { action: "status" } }),
+      supabase.functions.invoke("supabase-link-manager", { body: { action: "status" } }),
+    ]);
+    if (!githubStatus.error && githubStatus.data?.connected) {
+      next.github = {
+        login: githubStatus.data.login,
+        avatar_url: githubStatus.data.avatar_url,
+      };
+    }
+    if (!supabaseStatus.error && supabaseStatus.data?.connected) {
+      next.supabase = { connected_at: new Date().toISOString() };
+    }
     setStatus(next);
   };
 
@@ -53,31 +58,64 @@ const ConnectIntegrationsSheet = ({ open, onClose, userId, projectId }: Props) =
   const startOAuth = async (provider: "github" | "supabase") => {
     if (!userId) return;
     setBusy(provider);
+    const popup = window.open("about:blank", `${provider}-oauth`, "width=600,height=750");
     try {
-      const fnName = provider === "github" ? "oauth-github-connect" : "oauth-supabase-connect";
-      const { data, error } = await supabase.functions.invoke(`${fnName}?action=start&user_id=${userId}`);
-      if (error || !data?.url) {
-        toast({ title: "Could not start connection", variant: "destructive" });
+      const statusFn = provider === "github" ? "github-push" : "supabase-link-manager";
+      const startFn = provider === "github" ? "oauth-github-connect" : "supabase-oauth-start";
+      const { data: st } = await supabase.functions.invoke(statusFn, { body: { action: "status" } });
+      if (st?.connected) {
+        if (popup && !popup.closed) popup.close();
+        setStatus((s) => ({
+          ...s,
+          [provider]: provider === "github" ? { login: st.login, avatar_url: st.avatar_url } : { connected_at: new Date().toISOString() },
+        }));
+        toast({ title: `${provider === "github" ? "GitHub" : "Supabase"} already connected` });
+        if (provider === "supabase") await openProjectPicker();
+        setBusy(null);
         return;
       }
-      window.location.href = data.url;
-    } finally {
+      const { data, error } = await supabase.functions.invoke(startFn, { body: { redirect_to: window.location.href } });
+      if (error || data?.error || !data?.authorize_url) throw new Error(data?.error || error?.message || "OAuth is not configured");
+      if (!popup) throw new Error("Allow popups to complete the connection");
+      popup.location.href = data.authorize_url;
+      const listener = async (ev: MessageEvent) => {
+        if (ev.data?.type !== `${provider}-oauth`) return;
+        window.removeEventListener("message", listener);
+        window.clearInterval(poll);
+        if (ev.data?.ok === false) {
+          toast({ title: ev.data?.message || "Connection failed", variant: "destructive" });
+          setBusy(null);
+          return;
+        }
+        await loadStatus();
+        toast({ title: `${provider === "github" ? "GitHub" : "Supabase"} connected` });
+        if (provider === "supabase") await openProjectPicker();
+        setBusy(null);
+      };
+      window.addEventListener("message", listener);
+      const poll = window.setInterval(async () => {
+        if (!popup.closed) return;
+        window.clearInterval(poll);
+        window.removeEventListener("message", listener);
+        await loadStatus();
+        setBusy(null);
+      }, 1200);
+    } catch (e) {
+      if (popup && !popup.closed) popup.close();
+      toast({ title: e instanceof Error ? e.message : "Connection failed", variant: "destructive" });
       setBusy(null);
     }
   };
+
 
   const openProjectPicker = async () => {
     if (!userId) return;
     setShowPicker(true);
     setBusy("list");
     try {
-      const { data } = await supabase.functions.invoke("oauth-supabase-connect?action=list-projects", {
-        body: { user_id: userId },
-      });
+      const { data } = await supabase.functions.invoke("supabase-link-manager", { body: { action: "list_projects" } });
       setProjects(data?.projects || []);
-      const { data: orgsData } = await supabase.functions.invoke("oauth-supabase-connect?action=list-orgs", {
-        body: { user_id: userId },
-      });
+      const { data: orgsData } = await supabase.functions.invoke("supabase-link-manager", { body: { action: "list_orgs" } });
       setOrgs(orgsData?.orgs || []);
       if (orgsData?.orgs?.[0]) setNewOrg(orgsData.orgs[0].id);
     } finally {
@@ -107,8 +145,8 @@ const ConnectIntegrationsSheet = ({ open, onClose, userId, projectId }: Props) =
     if (!userId || !newName.trim() || !newOrg) return;
     setCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("oauth-supabase-connect?action=create-project", {
-        body: { user_id: userId, name: newName.trim(), organization_id: newOrg },
+      const { data, error } = await supabase.functions.invoke("supabase-link-manager", {
+        body: { action: "create_project", name: newName.trim(), organization_id: newOrg },
       });
       if (error || data?.error) {
         toast({ title: "Create failed", description: data?.error || error?.message, variant: "destructive" });
@@ -239,7 +277,7 @@ const ConnectIntegrationsSheet = ({ open, onClose, userId, projectId }: Props) =
                             <p className="text-xs font-medium">{p.name}</p>
                             <p className="text-[10px] text-muted-foreground">{p.region}</p>
                           </div>
-                          <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                          <Check className="w-3 h-3 text-muted-foreground" />
                         </button>
                       ))}
                     </div>

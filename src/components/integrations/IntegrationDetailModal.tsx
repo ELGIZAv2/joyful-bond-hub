@@ -1,4 +1,4 @@
-import { Check, Loader2, X, ExternalLink } from "lucide-react";
+import { Check, Loader2, X, Power } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Integration } from "@/lib/integrationsData";
 
@@ -32,7 +32,7 @@ const descriptions: Record<string, string> = {
   gmail: "Connect your Gmail account to send, read, and manage emails directly from the chat. You can compose emails, search your inbox, and set up automated email workflows — all through natural conversation.",
   slack: "Integrate Slack to send messages, manage channels, and receive notifications. Perfect for team communication workflows where you need to post updates, search conversations, or create channels programmatically.",
   notion: "Connect Notion to create pages, manage databases, and organize your workspace. Use it to automatically generate documentation, update project wikis, or sync data between your tools.",
-  github: "Link your GitHub account to create issues, manage repositories, review pull requests, and automate development workflows. Ideal for developers who want to manage their codebase through chat.",
+  github: "GitHub يعمل عبر تكامل الباكند لإنشاء وإدارة المستودعات ودفع ملفات المشروع بدون فتح GitHub خارج التطبيق.",
   discord: "Connect Discord to send messages, manage servers, and create bots. Great for community management and automated notifications to your Discord channels.",
   stripe: "Integrate Stripe for payment processing, subscription management, and financial reporting. Monitor transactions, create payment links, and manage your billing directly.",
   shopify: "Connect your Shopify store to manage products, orders, and customers. Track inventory, process orders, and update your store catalog through simple conversations.",
@@ -43,7 +43,7 @@ const descriptions: Record<string, string> = {
 
 function getDetailDescription(integration: Integration): string {
   return descriptions[integration.app] || 
-    `Connect ${integration.name} to enhance your workflow with powerful automation capabilities. Once connected, you can interact with ${integration.name} directly through the chat interface, automating tasks and managing your ${integration.category.toLowerCase()} workflows efficiently. This integration uses secure OAuth2 authentication to ensure your data remains protected.`;
+    `شغّل ${integration.name} داخل Megsy عبر تكامل الباكند، ثم استخدمه مباشرة من واجهة التطبيق بدون تحويلك لمواقع خارجية.`;
 }
 
 interface Props {
@@ -116,16 +116,16 @@ export default function IntegrationDetailModal({ integration, isConnected, isLoa
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70 mb-1.5">What happens when you connect</p>
               <ul className="space-y-1.5 text-sm text-foreground/80">
-                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>Secure OAuth2 sign-in — no credentials stored.</li>
-                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>Megsy can read and act inside {integration.name} on your behalf.</li>
-                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>You can disconnect at any time from this page.</li>
+                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>يتم فحص مفتاح الباكند وتشغيل التكامل داخليًا.</li>
+                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>Megsy يستخدم {integration.name} من داخل التطبيق بدون تبويبات خارجية.</li>
+                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>يمكنك تعطيل التكامل من هذه الصفحة في أي وقت.</li>
               </ul>
             </div>
 
             <div className="p-3 rounded-xl bg-muted/40">
               <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70 mb-1">How to use</p>
               <p className="text-xs text-foreground/75 leading-relaxed">
-                After connecting, mention <span className="font-medium text-foreground">@{integration.name.toLowerCase().replace(/\s+/g, "")}</span> in chat to interact with it, or just ask Megsy in plain language.
+                بعد التشغيل، اطلب من Megsy تنفيذ مهام {integration.name} مباشرة، وسيتم تنفيذها عبر الباكند.
               </p>
             </div>
           </div>
@@ -150,8 +150,8 @@ export default function IntegrationDetailModal({ integration, isConnected, isLoa
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                   <>
-                    <ExternalLink className="w-4 h-4" />
-                    Connect {integration.name}
+                    <Power className="w-4 h-4" />
+                    Enable {integration.name}
                   </>
                 )}
               </button>

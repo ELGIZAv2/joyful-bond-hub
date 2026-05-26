@@ -32,13 +32,6 @@ function getIcon(app: string): string | null {
   return ICON_MAP[app] ? `${ICON_BASE}/${ICON_MAP[app]}.svg` : null;
 }
 
-const LOCAL_KEY = "lovable.integrations.connected";
-
-const EXTERNAL_AUTH: Record<string, { url: string; label: string }> = {
-  github: { url: "https://github.com/settings/connections/applications", label: "GitHub" },
-  supabase: { url: "https://supabase.com/dashboard/account/tokens", label: "Supabase" },
-};
-
 const IntegrationsPage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -51,8 +44,17 @@ const IntegrationsPage = () => {
 
   const loadConnections = async () => {
     try {
-      const raw = localStorage.getItem(LOCAL_KEY);
-      if (raw) setConnectedApps(JSON.parse(raw));
+      // Backend is the source of truth — no localStorage.
+      const next: Record<string, string> = {};
+      const [githubStatus, supabaseStatus] = await Promise.all([
+        supabase.functions.invoke("github-push", { body: { action: "status" } }),
+        supabase.functions.invoke("supabase-link-manager", { body: { action: "status" } }),
+      ]);
+      if (!githubStatus.error && githubStatus.data?.connected) next.github = "linked";
+      else delete next.github;
+      if (!supabaseStatus.error && supabaseStatus.data?.connected) next.supabase = "linked";
+      else delete next.supabase;
+      setConnectedApps(next);
     } catch {
       // ignore
     } finally {
@@ -62,32 +64,70 @@ const IntegrationsPage = () => {
 
   const persist = (next: Record<string, string>) => {
     setConnectedApps(next);
-    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(next)); } catch {}
   };
 
   const handleConnect = async (integration: Integration) => {
-    const ext = EXTERNAL_AUTH[integration.app];
-    if (!ext) {
+    if (integration.app !== "github" && integration.app !== "supabase") {
       toast.error(`${integration.name} is not available yet`);
       return;
     }
     setLoadingApp(integration.id);
+    const popup = window.open("about:blank", `${integration.app}-oauth`, "width=600,height=750");
     try {
-      const win = window.open(ext.url, "_blank", "noopener,noreferrer");
-      if (!win) {
-        toast.error("Allow popups to continue, then try again");
+      const statusFn = integration.app === "github" ? "github-push" : "supabase-link-manager";
+      const startFn = integration.app === "github" ? "oauth-github-connect" : "supabase-oauth-start";
+      const { data: status } = await supabase.functions.invoke(statusFn, { body: { action: "status" } });
+      if (status?.connected) {
+        if (popup && !popup.closed) popup.close();
+        persist({ ...connectedApps, [integration.app]: "linked" });
+        toast.success(`${integration.name} connected`);
+        setSelectedIntegration(null);
         return;
       }
-      persist({ ...connectedApps, [integration.app]: "linked" });
-      toast.success(`${integration.name} linked — finish authorization in the new tab`);
-    } finally {
+      const { data, error } = await supabase.functions.invoke(startFn, { body: { redirect_to: window.location.href } });
+      if (error || data?.error || !data?.authorize_url) throw new Error(data?.error || error?.message || "OAuth is not configured");
+      if (!popup) throw new Error("Allow popups to complete the connection");
+      popup.location.href = data.authorize_url;
+      const listener = (ev: MessageEvent) => {
+        if (ev.data?.type !== `${integration.app}-oauth`) return;
+        window.removeEventListener("message", listener);
+        window.clearInterval(poll);
+        if (ev.data?.ok === false) {
+          toast.error(ev.data?.message || `${integration.name} connection failed`);
+          setLoadingApp(null);
+          return;
+        }
+        persist({ ...connectedApps, [integration.app]: "linked" });
+        toast.success(`${integration.name} connected`);
+        setSelectedIntegration(null);
+        setLoadingApp(null);
+      };
+      window.addEventListener("message", listener);
+      const poll = window.setInterval(async () => {
+        if (!popup.closed) return;
+        window.clearInterval(poll);
+        window.removeEventListener("message", listener);
+        await loadConnections();
+        setLoadingApp(null);
+      }, 1200);
+    } catch (err) {
+      if (popup && !popup.closed) popup.close();
+      toast.error(err instanceof Error ? err.message : `${integration.name} connection failed`);
       setLoadingApp(null);
+    } finally {
+      if (!integration.app.includes("github") && !integration.app.includes("supabase")) setLoadingApp(null);
     }
   };
 
   const handleDisconnect = async (integration: Integration) => {
     setLoadingApp(integration.id);
     try {
+      if (integration.app === "github") {
+        await supabase.functions.invoke("github-push", { body: { action: "disconnect" } });
+      }
+      if (integration.app === "supabase") {
+        await supabase.functions.invoke("supabase-link-manager", { body: { action: "disconnect" } });
+      }
       const next = { ...connectedApps };
       delete next[integration.app];
       persist(next);
@@ -111,32 +151,43 @@ const IntegrationsPage = () => {
 
   const connectedCount = Object.keys(connectedApps).length;
 
-  const Row = ({ integration }: { integration: Integration }) => {
+  const Card = ({ integration }: { integration: Integration }) => {
     const connected = isConnected(integration.app);
     const iconUrl = getIcon(integration.app);
     return (
       <button
         onClick={() => setSelectedIntegration(integration)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/40 transition-colors first:rounded-t-2xl last:rounded-b-2xl"
+        className="group relative bg-card border border-border rounded-2xl p-5 text-left hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all"
       >
-        <div className="w-10 h-10 rounded-xl bg-muted grid place-items-center shrink-0 overflow-hidden">
-          {iconUrl ? (
-            <img src={iconUrl} alt="" className="w-5 h-5 dark:invert" loading="lazy" />
-          ) : (
-            <span className="text-[13px] font-semibold text-foreground/70">{integration.name.charAt(0)}</span>
-          )}
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-muted border border-border/60 grid place-items-center shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+            {iconUrl ? (
+              <img src={iconUrl} alt="" className="w-6 h-6 dark:invert" loading="lazy" />
+            ) : (
+              <span className="text-[14px] font-semibold text-foreground/70">{integration.name.charAt(0)}</span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h3 className="text-[14px] font-semibold text-foreground truncate">{integration.name}</h3>
+              {connected && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary uppercase shrink-0 inline-flex items-center gap-1">
+                  <Check className="w-2.5 h-2.5" /> Linked
+                </span>
+              )}
+            </div>
+            <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2">{integration.description}</p>
+            <div
+              className={`mt-4 w-full py-2 px-4 rounded-xl border text-[13px] font-semibold text-center transition-colors ${
+                connected
+                  ? "border-primary/20 bg-primary/5 text-primary"
+                  : "border-border text-foreground/80 group-hover:bg-muted"
+              }`}
+            >
+              {connected ? "Manage" : "Connect"}
+            </div>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-medium text-foreground truncate">{integration.name}</p>
-          <p className="text-[12px] text-muted-foreground truncate">{integration.description}</p>
-        </div>
-        {connected ? (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-foreground bg-muted px-2 py-1 rounded-full shrink-0">
-            <Check className="w-3 h-3" /> Connected
-          </span>
-        ) : (
-          <span className="text-[11px] text-muted-foreground/70 shrink-0">Connect</span>
-        )}
       </button>
     );
   };
@@ -146,16 +197,19 @@ const IntegrationsPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="max-w-2xl"
+      className="max-w-4xl"
     >
-      {/* Summary card */}
-      <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card mb-6">
+      {/* Header & Summary */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border pb-8 mb-10">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70">Integrations</p>
-          <p className="text-[15px] font-semibold text-foreground mt-0.5">
-            {connectedCount} connected
-            <span className="text-muted-foreground font-normal"> · {integrations.length} available</span>
-          </p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Integrations</h1>
+          <p className="text-muted-foreground mt-2 text-base md:text-lg">Supercharge your workflow with your favorite tools.</p>
+        </div>
+        <div className="flex items-center gap-3 bg-card p-1.5 pr-4 rounded-2xl border border-border shadow-sm self-start md:self-auto">
+          <div className="h-10 px-4 flex items-center bg-primary/10 text-primary rounded-xl font-semibold text-sm">
+            {connectedCount} Connected
+          </div>
+          <span className="text-sm font-medium text-muted-foreground">{integrations.length} Available</span>
         </div>
       </div>
 
@@ -164,14 +218,17 @@ const IntegrationsPage = () => {
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="space-y-7">
+        <div className="space-y-12">
           {grouped.map(group => (
             <section key={group.category}>
-              <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70 mb-2 px-1">
-                {group.category}
-              </p>
-              <div className="rounded-2xl border border-border bg-card divide-y divide-border">
-                {group.items.map(i => <Row key={i.id} integration={i} />)}
+              <div className="flex items-center gap-3 mb-6">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                  {group.category}
+                </h2>
+                <div className="h-px flex-1 bg-border/60"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {group.items.map(i => <Card key={i.id} integration={i} />)}
               </div>
             </section>
           ))}

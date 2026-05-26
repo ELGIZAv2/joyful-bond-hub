@@ -1,15 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ExternalLink, Power } from "lucide-react";
+import { ChevronLeft, Power } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "connectors:enabled";
-
-function readEnabled(): Record<string, boolean> {
-  if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; }
+// Connector state lives in user_connector_state (DB). No localStorage.
+async function readEnabledFromDB(): Promise<Record<string, boolean>> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return {};
+  const { data } = await supabase
+    .from("user_connector_state")
+    .select("connector_id, enabled")
+    .eq("user_id", user.id);
+  const out: Record<string, boolean> = {};
+  for (const r of (data as any[]) ?? []) out[r.connector_id] = !!r.enabled;
+  return out;
 }
-function writeEnabled(state: Record<string, boolean>) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* noop */ }
+async function writeEnabledToDB(connectorId: string, enabled: boolean) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("user_connector_state").upsert(
+    { user_id: user.id, connector_id: connectorId, enabled, updated_at: new Date().toISOString() } as any,
+    { onConflict: "user_id,connector_id" }
+  );
   try { window.dispatchEvent(new CustomEvent("connectors:changed")); } catch { /* noop */ }
 }
 
@@ -79,44 +91,67 @@ export default function ConnectorsSheet({ onClose }: { onClose: () => void }) {
   const active = CONNECTORS.find((c) => c.id === activeId) || null;
   const [mounted, setMounted] = useState(false);
   const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>(() => {
-    const stored = readEnabled();
+    // Defaults until DB hydrates.
     const out: Record<string, boolean> = {};
-    for (const c of CONNECTORS) out[c.id] = stored[c.id] ?? c.enabled;
+    for (const c of CONNECTORS) out[c.id] = c.enabled;
     return out;
   });
+
+  // Hydrate from DB on mount.
+  useEffect(() => {
+    let cancelled = false;
+    readEnabledFromDB().then((stored) => {
+      if (cancelled) return;
+      setEnabledMap((prev) => {
+        const out = { ...prev };
+        for (const c of CONNECTORS) if (c.id in stored) out[c.id] = stored[c.id];
+        return out;
+      });
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
-  }, []);
+  }, [enabledMap]);
 
   useEffect(() => {
     const onChange = () => {
-      const stored = readEnabled();
-      setEnabledMap((prev) => {
-        const out: Record<string, boolean> = { ...prev };
-        for (const c of CONNECTORS) if (c.id in stored) out[c.id] = stored[c.id];
-        return out;
+      readEnabledFromDB().then((stored) => {
+        setEnabledMap((prev) => {
+          const out: Record<string, boolean> = { ...prev };
+          for (const c of CONNECTORS) if (c.id in stored) out[c.id] = stored[c.id];
+          return out;
+        });
       });
     };
     window.addEventListener("connectors:changed", onChange);
-    window.addEventListener("storage", onChange);
     return () => {
       window.removeEventListener("connectors:changed", onChange);
-      window.removeEventListener("storage", onChange);
     };
   }, []);
 
-  const toggleEnabled = useCallback((id: string) => {
-    setEnabledMap((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      const persisted = readEnabled();
-      writeEnabled({ ...persisted, [id]: next[id] });
-      const c = CONNECTORS.find((x) => x.id === id);
-      toast.success(next[id] ? `${c?.name ?? "Integration"} enabled for workspace` : `${c?.name ?? "Integration"} disabled for workspace`);
-      return next;
-    });
-  }, []);
+  const toggleEnabled = useCallback(async (id: string) => {
+    const c = CONNECTORS.find((x) => x.id === id);
+    if (enabledMap[id]) {
+      const next = { ...enabledMap, [id]: false };
+      setEnabledMap(next);
+      await writeEnabledToDB(id, false);
+      toast.success(`${c?.name ?? "Integration"} disabled for workspace`);
+      return;
+    }
+    const fnName = id === "github" ? "github-push" : "supabase-link-manager";
+    const { data, error } = await supabase.functions.invoke(fnName, { body: { action: "status" } });
+    if (error || data?.error || !data?.connected) {
+      toast.error(data?.error || `${c?.name ?? "Integration"} backend token is not configured`);
+      return;
+    }
+    const next = { ...enabledMap, [id]: true };
+    setEnabledMap(next);
+    await writeEnabledToDB(id, true);
+    toast.success(`${c?.name ?? "Integration"} backend integration is active`);
+  }, [enabledMap]);
 
   function handleClose() {
     setMounted(false);
@@ -285,16 +320,15 @@ function DetailView({
             <Power className="w-3.5 h-3.5" />
             {enabled ? "Disable" : "Enable"}
           </button>
-          <a
-            href={connector.docsUrl}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => toast.success(`${connector.name} runs through backend integration`)}
             className="h-10 rounded-xl backdrop-blur-2xl border border-foreground/10 hover:border-foreground/20 text-[13.5px] font-medium transition inline-flex items-center justify-center gap-1.5"
             style={{ background: "color-mix(in oklab, hsl(var(--background)) 45%, transparent)" }}
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Docs
-          </a>
+            <Power className="w-3.5 h-3.5" />
+            Backend
+          </button>
         </div>
       </div>
 

@@ -44,8 +44,8 @@ export const WORKSPACE_PLANS: WorkspacePlanOption[] = [
     monthlyPrice: 9,
     yearlyPrice: 89,
     tagline: "Matches the Starter pay plan",
-    creditsLabel: "80 MC / month",
-    perks: ["All chat models", "50 images / month", "10 code builds / month"],
+    creditsLabel: "70 MC / month",
+    perks: ["Unlimited chat", "Megsy Pro & Max", "Credit-based image, code & research", "24/7 support"],
   },
   {
     id: "pro",
@@ -53,8 +53,8 @@ export const WORKSPACE_PLANS: WorkspacePlanOption[] = [
     monthlyPrice: 29,
     yearlyPrice: 299,
     tagline: "Matches the Pro pay plan",
-    creditsLabel: "280 MC / month",
-    perks: ["All AI models", "200 images / month", "40 code builds / month"],
+    creditsLabel: "240 MC / month",
+    perks: ["Unlimited images, slides, docs & deep research", "Video (credit-based)", "Team workspace included", "24/7 support"],
   },
   {
     id: "elite",
@@ -62,8 +62,8 @@ export const WORKSPACE_PLANS: WorkspacePlanOption[] = [
     monthlyPrice: 59,
     yearlyPrice: 599,
     tagline: "Matches the Elite pay plan",
-    creditsLabel: "480 MC / month",
-    perks: ["Priority speed", "500 images / month", "80 code builds / month"],
+    creditsLabel: "500 MC / month",
+    perks: ["Priority image queue", "API + webhooks", "Analytics dashboard", "24/7 support"],
   },
   {
     id: "business",
@@ -71,8 +71,8 @@ export const WORKSPACE_PLANS: WorkspacePlanOption[] = [
     monthlyPrice: 149,
     yearlyPrice: 1599,
     tagline: "Matches the Business pay plan",
-    creditsLabel: "1,480 MC / month",
-    perks: ["Dedicated infrastructure", "SLA guarantees", "Dedicated account manager"],
+    creditsLabel: "1,200 MC / month",
+    perks: ["Dedicated infrastructure", "SSO & SLA", "24/7 support"],
   },
 ];
 

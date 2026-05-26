@@ -73,6 +73,8 @@ const CookiePolicyPage = lazy(() => import("./pages/marketing/CookiePolicyPage")
 const TermsPage = lazy(() => import("./pages/marketing/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/marketing/PrivacyPage"));
 const RefundPage = lazy(() => import("./pages/marketing/RefundPage"));
+const ReferralRedirectPage = lazy(() => import("./pages/auth/ReferralRedirectPage"));
+
 
 const AffiliateTermsPage = lazy(() => import("./pages/marketing/AffiliateTermsPage"));
 const DMCAPage = lazy(() => import("./pages/marketing/DMCAPage"));
@@ -331,6 +333,8 @@ const App = () => {
 
                   {/* Public / marketing */}
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/ref/:code" element={<ReferralRedirectPage />} />
+
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/megsy-corn" element={<MegsyCornPage />} />
                   <Route path="/megsy-corn/run" element={<MegsyCornRunPage />} />
@@ -461,6 +465,7 @@ const App = () => {
                   <Route path="/settings/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
                   <Route path="/settings/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
                   <Route path="/billing/success" element={<BillingSuccessPage />} />
+                  <Route path="/suc" element={<BillingSuccessPage />} />
                   <Route path="/settings/referrals" element={<ProtectedRoute><ReferralsPage /></ProtectedRoute>} />
                   <Route path="/settings/language" element={<ProtectedRoute><LanguagePage /></ProtectedRoute>} />
                   <Route path="/settings/integrations" element={<ProtectedRoute><IntegrationsPage /></ProtectedRoute>} />

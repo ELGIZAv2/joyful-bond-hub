@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/supabaseFunction";
 import { WORKSPACE_PRODUCT_MAP } from "@/lib/workspacePlans";
+import { UnlimitedModelsButton } from "@/components/branding/UnlimitedModelsButton";
 
 const PRODUCT_IDS: Record<string, string> = Object.fromEntries(
   Object.entries(WORKSPACE_PRODUCT_MAP).map(([key, value]) => [key, value.monthly]),
@@ -29,69 +30,70 @@ const plans: Plan[] = [
     name: "STARTER",
     tier: "starter",
     price: "9",
-    yearlyNote: "or $89/yr — 960 MC",
-    description: "Perfect for casual creators who want to explore AI tools",
+    yearlyNote: "or $89/yr — 840 MC",
+    description: "Perfect for casual creators exploring AI tools",
     nameClass: "from-emerald-300 to-emerald-500",
     features: [
-      { label: "Monthly Credits", value: "80 MC" },
-      { label: "Chat Models", value: "All" },
-      { label: "Image Generation", value: true },
-      { label: "Video Generation", value: true },
-      { label: "Code Builder", value: true },
-      { label: "Deploy & Publish", value: true },
-      { label: "Support", value: "Standard" },
+      { label: "Monthly Credits", value: "70 MC" },
+      { label: "Unlimited Chat", value: true },
+      { label: "Megsy Pro & Max", value: true },
+      { label: "Image Generation", value: "Credit-based" },
+      { label: "Code Builder", value: "Credit-based" },
+      { label: "Slides, Docs & Research", value: "Credit-based" },
+      { label: "Support", value: "24/7" },
     ],
   },
   {
     name: "PRO",
     tier: "pro",
     price: "29",
-    yearlyNote: "or $299/yr — 3,360 MC",
+    yearlyNote: "or $299/yr — 2,880 MC",
     description: "Best for daily creators and small teams who need more output",
     nameClass: "from-amber-300 to-yellow-500",
     features: [
-      { label: "Monthly Credits", value: "280 MC" },
-      { label: "All AI Models", value: true },
-      { label: "Private Creations", value: true },
-      { label: "Custom Presets", value: true },
-      { label: "API Access", value: true },
+      { label: "Monthly Credits", value: "240 MC" },
+      { label: "Unlimited Chat", value: true },
+      { label: "Unlimited Images", value: true },
+      { label: "Unlimited Slides & Docs", value: true },
+      { label: "Unlimited Deep Research", value: true },
+      { label: "Video (credit-based)", value: true },
       { label: "Team Workspace", value: true },
-      { label: "Support", value: "Priority" },
+      { label: "API Access", value: true },
+      { label: "Support", value: "24/7" },
     ],
   },
   {
     name: "ELITE",
     tier: "elite",
     price: "59",
-    yearlyNote: "or $599/yr — 5,760 MC",
+    yearlyNote: "or $599/yr — 6,000 MC",
     description: "For semi-pros and active creators who need maximum power",
     nameClass: "from-green-400 to-emerald-500",
     bestOffer: true,
     features: [
-      { label: "Monthly Credits", value: "480 MC" },
-      { label: "All Models (Fast Lane)", value: true },
-      { label: "Advanced Presets", value: true },
+      { label: "Monthly Credits", value: "500 MC" },
+      { label: "Everything in Pro", value: true },
+      { label: "Priority Image Queue", value: true },
       { label: "API + Webhooks", value: true },
       { label: "Custom Branding", value: true },
       { label: "Analytics Dashboard", value: true },
-      { label: "Support", value: "Dedicated" },
+      { label: "Support", value: "24/7" },
     ],
   },
   {
     name: "BUSINESS",
     tier: "business",
     price: "149",
-    yearlyNote: "or $1,599/yr — 17,760 MC",
+    yearlyNote: "or $1,599/yr — 14,400 MC",
     description: "Perfect for professional teams, studios, and content producers",
     nameClass: "from-rose-400 to-red-500",
     features: [
-      { label: "Monthly Credits", value: "1,480 MC" },
-      { label: "All Models + Priority", value: true },
+      { label: "Monthly Credits", value: "1,200 MC" },
+      { label: "Everything in Elite", value: true },
       { label: "Dedicated Infrastructure", value: true },
       { label: "SSO & Role Management", value: true },
-      { label: "Advanced Security", value: true },
-      { label: "SLA Guarantee", value: true },
-      { label: "Support", value: "Account Manager" },
+      { label: "Advanced Security & SLA", value: true },
+      { label: "Support", value: "24/7" },
     ],
   },
 ];
@@ -101,8 +103,7 @@ const PricingPreview = () => {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   const handleSubscribe = async (tier: string) => {
-    const product_id = PRODUCT_IDS[tier];
-    if (!product_id) {
+    if (!["starter", "pro", "elite", "business"].includes(tier)) {
       navigate("/pricing");
       return;
     }
@@ -113,8 +114,9 @@ const PricingPreview = () => {
     }
     setLoadingTier(tier);
     try {
+      // Server resolves product_id from {tier, interval} — never trust client.
       const { data, error } = await invokeFunction("dodo-checkout", {
-        body: { product_id, plan: tier },
+        body: { tier, interval: "monthly" },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) throw error;
@@ -185,6 +187,12 @@ const PricingPreview = () => {
                 <p className="mt-2 text-center text-xs text-white/30">ex. tax</p>
                 <p className="mt-1 text-center text-[11px] text-white/35">{plan.yearlyNote}</p>
 
+                {Number(plan.price) >= 29 && (
+                  <div className="mt-4">
+                    <UnlimitedModelsButton />
+                  </div>
+                )}
+
                 {/* Subscribe button */}
                 <button
                   onClick={() => handleSubscribe(plan.tier)}
@@ -194,9 +202,12 @@ const PricingPreview = () => {
                   {loadingTier === plan.tier ? (
                     <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                   ) : (
-                    "Subscribe"
+                    `Get ${plan.name.charAt(0) + plan.name.slice(1).toLowerCase()}`
                   )}
                 </button>
+
+
+
 
                 {/* Description */}
                 <p className="mt-7 min-h-[3rem] text-center text-sm leading-relaxed text-white/55">

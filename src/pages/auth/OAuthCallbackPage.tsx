@@ -15,26 +15,41 @@ const OAuthCallbackPage = () => {
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
         const state = params.get("state");
+        const providerError = params.get("error_description") || params.get("error");
         if (!code || !state) {
           setStatus("error");
-          setMessage("Missing parameters");
+          setMessage(providerError || "Missing parameters");
+          if (window.opener) {
+            window.opener.postMessage({ type: `${provider}-oauth`, ok: false, message: providerError || "Missing parameters" }, window.location.origin);
+            setTimeout(() => window.close(), 900);
+          }
           return;
         }
 
         const fnName = provider === "github" ? "oauth-github-connect" : "oauth-supabase-connect";
         const { data, error } = await supabase.functions.invoke(`${fnName}?action=exchange`, {
-          body: { code, state },
+          body: { code, state, redirect_origin: window.location.origin },
         });
 
         if (error || data?.error) {
           setStatus("error");
-          setMessage(data?.error || "Connection failed");
+          const errorMessage = data?.error || error?.message || "Connection failed";
+          setMessage(errorMessage);
+          if (window.opener) {
+            window.opener.postMessage({ type: `${provider}-oauth`, ok: false, message: errorMessage }, window.location.origin);
+            setTimeout(() => window.close(), 900);
+          }
           return;
         }
 
         setStatus("ok");
         setMessage(`${provider === "github" ? "GitHub" : "Supabase"} connected successfully`);
-        setTimeout(() => navigate("/programming"), 1500);
+        if (window.opener) {
+          window.opener.postMessage({ type: `${provider}-oauth`, ok: true }, window.location.origin);
+          setTimeout(() => window.close(), 500);
+        } else {
+          setTimeout(() => navigate("/programming"), 1500);
+        }
       } catch (e: any) {
         setStatus("error");
         setMessage(e?.message || "Connection failed");

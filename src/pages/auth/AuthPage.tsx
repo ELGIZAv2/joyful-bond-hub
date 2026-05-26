@@ -26,7 +26,7 @@ const AuthPage = () => {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [mobileVideoLoaded, setMobileVideoLoaded] = useState(false);
   const [mobileImgIndex, setMobileImgIndex] = useState(0);
-  const mobileImages = ["/auth/mobile-1.jpg", "/auth/mobile-2.jpg", "/auth/mobile-3.jpg"];
+  const mobileImages = ["/auth/mobile-1.webp", "/auth/mobile-2.webp", "/auth/mobile-3.webp"];
   useEffect(() => {
     const id = setInterval(() => setMobileImgIndex((i) => (i + 1) % 3), 4500);
     return () => clearInterval(id);
@@ -245,16 +245,35 @@ const AuthPage = () => {
     if (!newPassword || newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setIsSubmitting(true);
     try {
-      const { data, error } = await invokeFunction("signup", { body: { email: email.trim().toLowerCase(), password: newPassword } });
+      // Pick up referral code captured via /ref/:code (stored client-side only).
+      // The server is the source of truth for crediting the referrer.
+      let referralCode: string | null = null;
+      try {
+        const raw = localStorage.getItem("megsy_referral_code");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.code && typeof parsed.code === "string") referralCode = parsed.code;
+        }
+      } catch {}
+
+      const { data, error } = await invokeFunction("signup", {
+        body: {
+          email: email.trim().toLowerCase(),
+          password: newPassword,
+          ...(referralCode ? { referral_code: referralCode } : {}),
+        },
+      });
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Could not create account");
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw verifyError;
+      try { localStorage.removeItem("megsy_referral_code"); } catch {}
       toast.success("Account created!");
       if (redirectUrl) window.location.href = redirectUrl; else navigate("/chat");
     } catch (e: any) { toast.error(e.message || "Could not create account"); }
     finally { setIsSubmitting(false); }
   };
+
 
   const handleResetPassword = async () => {
     if (!newPassword || newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
@@ -322,7 +341,7 @@ const AuthPage = () => {
       {/* Mobile top video with image fallback (hidden on desktop) */}
       <div className="lg:hidden relative w-full h-[38vh] shrink-0 overflow-hidden z-0">
         <img
-          src="/auth/auth-mobile-fallback.jpg"
+          src="/auth/auth-mobile-fallback.webp"
           alt=""
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${mobileVideoLoaded ? 'opacity-0' : 'opacity-100'}`}
         />
@@ -595,7 +614,7 @@ const AuthPage = () => {
       {/* Right half — video background with image fallback (desktop only) */}
       <aside className="hidden lg:block lg:w-1/2 lg:min-h-screen relative overflow-hidden">
         <img
-          src="/auth/auth-side.jpg"
+          src="/auth/auth-side.webp"
           alt=""
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${videoLoaded ? 'opacity-0' : 'opacity-100'}`}
         />

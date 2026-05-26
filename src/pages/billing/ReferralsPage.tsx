@@ -43,7 +43,7 @@ const ReferralsPage = () => {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [activeTab, setActiveTab] = useState<"referrals" | "earnings" | "withdrawals">("referrals");
 
-  const referralLink = referralCode ? `https://megsyai.com/ref/${referralCode}` : "";
+  const referralLink = referralCode ? `${window.location.origin}/ref/${referralCode}` : "";
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();

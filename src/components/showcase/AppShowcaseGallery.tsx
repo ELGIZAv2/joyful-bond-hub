@@ -23,6 +23,8 @@ const AppShowcaseGallery = ({ mode, onItemClick }: AppShowcaseGalleryProps) => {
         .from("showcase_items" as any)
         .select("*")
         .eq("media_type", mediaType)
+        .order("is_trending", { ascending: false })
+        .order("trending_at", { ascending: false, nullsFirst: false })
         .order("display_order", { ascending: true });
       if (data) setDbItems(data as unknown as ShowcaseItem[]);
     };
