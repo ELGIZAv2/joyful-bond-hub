@@ -105,8 +105,8 @@ const TemplatePickerSheet = ({
               </div>
               {showCategoryTabs && (
                 <div className="mt-2 flex items-center gap-1 p-1 rounded-2xl bg-muted/60 max-w-md mx-auto">
-                  <button onClick={() => setTab("standard")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "standard" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>العادي</button>
-                  <button onClick={() => setTab("premium")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>المميز</button>
+                  <button onClick={() => setTab("standard")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "standard" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>Standard</button>
+                  <button onClick={() => setTab("premium")} className={`flex-1 h-10 rounded-xl text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground"}`}>Premium</button>
                 </div>
               )}
             </header>
@@ -179,11 +179,11 @@ const TemplatePickerSheet = ({
                     <button
                       onClick={() => setTab("standard")}
                       className={`px-5 h-8 rounded-full text-xs font-semibold transition ${tab === "standard" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >العادي</button>
+                    >Standard</button>
                     <button
                       onClick={() => setTab("premium")}
                       className={`px-5 h-8 rounded-full text-xs font-semibold transition ${tab === "premium" ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                    >المميز</button>
+                    >Premium</button>
                   </div>
                 )}
               </header>

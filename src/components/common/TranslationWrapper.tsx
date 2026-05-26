@@ -91,19 +91,18 @@ function triggerTranslateOnce(langCode: string) {
 
   if (langCode === "en") {
     clearGoogTransCookie();
-    // Restore originals for placeholders
     document.querySelectorAll("[data-orig-placeholder]").forEach((el) => {
       el.setAttribute("placeholder", el.getAttribute("data-orig-placeholder")!);
     });
-    const frame = document.querySelector<HTMLIFrameElement>(".goog-te-banner-frame");
-    if (frame) {
-      frame.contentDocument?.querySelector<HTMLElement>(".goog-close-link")?.click();
+    // Switch Google combo back to English in-place — no full page reload
+    const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+    if (select) {
+      select.value = "en";
+      select.dispatchEvent(new Event("change"));
     }
-    window.location.reload();
     return;
   }
 
-  // Set cookie so Google remembers
   setGoogTransCookie(gtLang);
 
   let attempts = 0;
@@ -112,7 +111,6 @@ function triggerTranslateOnce(langCode: string) {
     if (select) {
       select.value = gtLang;
       select.dispatchEvent(new Event("change"));
-      // Translate input attributes after Google finishes
       setTimeout(translateInputAttributes, 2000);
       return;
     }

@@ -32,7 +32,7 @@ const descriptions: Record<string, string> = {
   gmail: "Connect your Gmail account to send, read, and manage emails directly from the chat. You can compose emails, search your inbox, and set up automated email workflows — all through natural conversation.",
   slack: "Integrate Slack to send messages, manage channels, and receive notifications. Perfect for team communication workflows where you need to post updates, search conversations, or create channels programmatically.",
   notion: "Connect Notion to create pages, manage databases, and organize your workspace. Use it to automatically generate documentation, update project wikis, or sync data between your tools.",
-  github: "GitHub يعمل عبر تكامل الباكند لإنشاء وإدارة المستودعات ودفع ملفات المشروع بدون فتح GitHub خارج التطبيق.",
+  github: "GitHub runs via the backend integration to create and manage repos and push project files without leaving the app.",
   discord: "Connect Discord to send messages, manage servers, and create bots. Great for community management and automated notifications to your Discord channels.",
   stripe: "Integrate Stripe for payment processing, subscription management, and financial reporting. Monitor transactions, create payment links, and manage your billing directly.",
   shopify: "Connect your Shopify store to manage products, orders, and customers. Track inventory, process orders, and update your store catalog through simple conversations.",
@@ -43,7 +43,7 @@ const descriptions: Record<string, string> = {
 
 function getDetailDescription(integration: Integration): string {
   return descriptions[integration.app] || 
-    `شغّل ${integration.name} داخل Megsy عبر تكامل الباكند، ثم استخدمه مباشرة من واجهة التطبيق بدون تحويلك لمواقع خارجية.`;
+    `Run ${integration.name} inside Megsy via the backend integration and use it directly from the app — no external tabs.`;
 }
 
 interface Props {
@@ -116,16 +116,16 @@ export default function IntegrationDetailModal({ integration, isConnected, isLoa
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70 mb-1.5">What happens when you connect</p>
               <ul className="space-y-1.5 text-sm text-foreground/80">
-                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>يتم فحص مفتاح الباكند وتشغيل التكامل داخليًا.</li>
-                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>Megsy يستخدم {integration.name} من داخل التطبيق بدون تبويبات خارجية.</li>
-                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>يمكنك تعطيل التكامل من هذه الصفحة في أي وقت.</li>
+                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>The backend key is verified and the integration is enabled internally.</li>
+                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>Megsy uses {integration.name} from inside the app — no external tabs.</li>
+                <li className="flex gap-2"><span className="text-muted-foreground/60">·</span>You can disable the integration from this page at any time.</li>
               </ul>
             </div>
 
             <div className="p-3 rounded-xl bg-muted/40">
               <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground/70 mb-1">How to use</p>
               <p className="text-xs text-foreground/75 leading-relaxed">
-                بعد التشغيل، اطلب من Megsy تنفيذ مهام {integration.name} مباشرة، وسيتم تنفيذها عبر الباكند.
+                Once enabled, ask Megsy to run {integration.name} tasks directly — they execute via the backend.
               </p>
             </div>
           </div>
