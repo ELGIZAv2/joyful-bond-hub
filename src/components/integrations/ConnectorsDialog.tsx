@@ -21,14 +21,14 @@ const connectors = [
   {
     id: "github",
     name: "GitHub",
-    description: "اربط مستودعاتك لقراءة الكود وإدارة المهام.",
+    description: "Connect your repositories to read code and manage tasks.",
     icon: GitHubIcon,
     category: "Development",
   },
   {
     id: "supabase",
     name: "Supabase",
-    description: "اربط مشروع Supabase الخاص بك لإدارة البيانات والمصادقة.",
+    description: "Connect your Supabase project to manage data and auth.",
     icon: SupabaseIcon,
     category: "Backend",
   },
@@ -75,14 +75,14 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
       if (status?.connected) {
         if (popup && !popup.closed) popup.close();
         setConnectedMap((prev) => ({ ...prev, [c.id]: true }));
-        toast.success(`${c.name} متصل بالفعل`);
+        toast.success(`${c.name} already connected`);
         setLoadingConnector(null);
         return;
       }
 
       const { data, error } = await supabase.functions.invoke(startFn, { body: { redirect_to: window.location.href } });
-      if (error || data?.error || !data?.authorize_url) throw new Error(data?.error || error?.message || `${c.name} OAuth غير مهيأ`);
-      if (!popup) throw new Error("اسمح بفتح النوافذ المنبثقة لإكمال الربط");
+      if (error || data?.error || !data?.authorize_url) throw new Error(data?.error || error?.message || `${c.name} OAuth not configured`);
+      if (!popup) throw new Error("Allow popups to complete the connection");
       popup.location.href = data.authorize_url;
 
       const listener = async (ev: MessageEvent) => {
@@ -90,10 +90,10 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
         window.removeEventListener("message", listener);
         window.clearInterval(poll);
         if (ev.data?.ok === false) {
-          toast.error(ev.data?.message || `فشل ربط ${c.name}`);
+          toast.error(ev.data?.message || `Failed to connect ${c.name}`);
         } else {
           await loadConnections();
-          toast.success(`${c.name} اتربط بنجاح`);
+          toast.success(`${c.name} connected successfully`);
         }
         setLoadingConnector(null);
       };
@@ -107,7 +107,7 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
       }, 1200);
     } catch (err) {
       if (popup && !popup.closed) popup.close();
-      toast.error(err instanceof Error ? err.message : `فشل تشغيل ${c.name}`);
+      toast.error(err instanceof Error ? err.message : `Failed to start ${c.name}`);
       setLoadingConnector(null);
     }
   };
@@ -119,7 +119,7 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
           <div>
             <h2 className="text-xl font-bold text-foreground">Connectors</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              اربط GitHub و Supabase من نفس مسار OAuth المستخدم في صفحة التكاملات.
+              Connect GitHub and Supabase via the same OAuth flow used on the integrations page.
             </p>
           </div>
 
@@ -129,7 +129,7 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="بحث"
+                placeholder="Search"
                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-secondary/30 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
               />
             </div>
@@ -137,7 +137,7 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
               onClick={() => { onOpenChange(false); onNavigateIntegrations(); }}
               className="px-3 py-2 rounded-lg border border-border bg-secondary/30 text-sm text-foreground hover:bg-accent transition-colors whitespace-nowrap"
             >
-              إدارة التكاملات
+              Manage integrations
             </button>
           </div>
         </div>
@@ -164,7 +164,7 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
                 ) : connectedMap[connector.id] ? (
                   <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                 ) : (
-                  <span className="text-[11px] text-muted-foreground/70 shrink-0">ربط</span>
+                  <span className="text-[11px] text-muted-foreground/70 shrink-0">Connect</span>
                 )}
               </button>
             ))}
@@ -172,7 +172,7 @@ const ConnectorsDialog = ({ open, onOpenChange, onNavigateIntegrations }: Connec
 
           {filtered.length === 0 && (
             <div className="text-center py-12 text-muted-foreground text-sm">
-              لا توجد نتائج
+              No results
             </div>
           )}
         </div>
