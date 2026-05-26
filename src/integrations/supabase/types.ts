@@ -527,6 +527,8 @@ export type Database = {
           api_key: string
           block_reason: string | null
           created_at: string | null
+          credit_limit_usd: number
+          credit_used_usd: number
           error_count: number | null
           id: string
           is_active: boolean | null
@@ -534,6 +536,7 @@ export type Database = {
           label: string | null
           last_error_at: string | null
           last_used_at: string | null
+          provider_meta: Json
           service: string
           usage_count: number | null
         }
@@ -541,6 +544,8 @@ export type Database = {
           api_key: string
           block_reason?: string | null
           created_at?: string | null
+          credit_limit_usd?: number
+          credit_used_usd?: number
           error_count?: number | null
           id?: string
           is_active?: boolean | null
@@ -548,6 +553,7 @@ export type Database = {
           label?: string | null
           last_error_at?: string | null
           last_used_at?: string | null
+          provider_meta?: Json
           service: string
           usage_count?: number | null
         }
@@ -555,6 +561,8 @@ export type Database = {
           api_key?: string
           block_reason?: string | null
           created_at?: string | null
+          credit_limit_usd?: number
+          credit_used_usd?: number
           error_count?: number | null
           id?: string
           is_active?: boolean | null
@@ -562,6 +570,7 @@ export type Database = {
           label?: string | null
           last_error_at?: string | null
           last_used_at?: string | null
+          provider_meta?: Json
           service?: string
           usage_count?: number | null
         }
@@ -755,6 +764,27 @@ export type Database = {
           type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      bot_admin_pending: {
+        Row: {
+          awaiting_service: string
+          created_at: string
+          expires_at: string
+          telegram_chat_id: number
+        }
+        Insert: {
+          awaiting_service: string
+          created_at?: string
+          expires_at?: string
+          telegram_chat_id: number
+        }
+        Update: {
+          awaiting_service?: string
+          created_at?: string
+          expires_at?: string
+          telegram_chat_id?: number
         }
         Relationships: []
       }
@@ -1463,6 +1493,7 @@ export type Database = {
       daily_free_usage: {
         Row: {
           created_at: string
+          feature: string
           id: string
           usage_count: number
           usage_date: string
@@ -1470,6 +1501,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          feature?: string
           id?: string
           usage_count?: number
           usage_date?: string
@@ -1477,6 +1509,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          feature?: string
           id?: string
           usage_count?: number
           usage_date?: string
@@ -2537,6 +2570,33 @@ export type Database = {
         }
         Relationships: []
       }
+      message_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          project_id: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          project_id: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          project_id?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       message_reactions: {
         Row: {
           conversation_id: string
@@ -3417,7 +3477,10 @@ export type Database = {
       profiles: {
         Row: {
           active_workspace_id: string | null
+          age_gate_acked_at: string | null
+          agents_onboarding_seen: boolean
           avatar_url: string | null
+          chat_greeted: boolean
           created_at: string
           credits: number
           display_name: string | null
@@ -3428,7 +3491,10 @@ export type Database = {
         }
         Insert: {
           active_workspace_id?: string | null
+          age_gate_acked_at?: string | null
+          agents_onboarding_seen?: boolean
           avatar_url?: string | null
+          chat_greeted?: boolean
           created_at?: string
           credits?: number
           display_name?: string | null
@@ -3439,7 +3505,10 @@ export type Database = {
         }
         Update: {
           active_workspace_id?: string | null
+          age_gate_acked_at?: string | null
+          agents_onboarding_seen?: boolean
           avatar_url?: string | null
+          chat_greeted?: boolean
           created_at?: string
           credits?: number
           display_name?: string | null
@@ -3513,6 +3582,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_drafts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_publish_settings: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       project_sandboxes: {
         Row: {
@@ -3707,6 +3830,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limit_buckets: {
+        Row: {
+          blocked_until: string | null
+          bucket: string
+          count: number
+          created_at: string
+          hour_count: number
+          hour_start: string
+          id: string
+          ip_hash: string | null
+          updated_at: string
+          user_id: string | null
+          window_start: string
+        }
+        Insert: {
+          blocked_until?: string | null
+          bucket: string
+          count?: number
+          created_at?: string
+          hour_count?: number
+          hour_start?: string
+          id?: string
+          ip_hash?: string | null
+          updated_at?: string
+          user_id?: string | null
+          window_start?: string
+        }
+        Update: {
+          blocked_until?: string | null
+          bucket?: string
+          count?: number
+          created_at?: string
+          hour_count?: number
+          hour_start?: string
+          id?: string
+          ip_hash?: string | null
+          updated_at?: string
+          user_id?: string | null
+          window_start?: string
+        }
+        Relationships: []
       }
       referral_codes: {
         Row: {
@@ -5094,6 +5259,54 @@ export type Database = {
           },
         ]
       }
+      user_connector_state: {
+        Row: {
+          connector_id: string
+          enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id: string
+          enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: string
+          enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_drafts: {
+        Row: {
+          created_at: string
+          draft_key: string
+          id: string
+          payload: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          draft_key: string
+          id?: string
+          payload?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          draft_key?: string
+          id?: string
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_gallery: {
         Row: {
           created_at: string
@@ -5384,6 +5597,45 @@ export type Database = {
           name?: string
           size_bytes?: number | null
           storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          active_workspace_id: string | null
+          ai_personalization: Json
+          created_at: string
+          customization: Json
+          language: string | null
+          memory: Json
+          notification_settings: Json
+          page_settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_workspace_id?: string | null
+          ai_personalization?: Json
+          created_at?: string
+          customization?: Json
+          language?: string | null
+          memory?: Json
+          notification_settings?: Json
+          page_settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_workspace_id?: string | null
+          ai_personalization?: Json
+          created_at?: string
+          customization?: Json
+          language?: string | null
+          memory?: Json
+          notification_settings?: Json
+          page_settings?: Json
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -6376,6 +6628,15 @@ export type Database = {
         Args: { p_amount: number; p_description?: string; p_user_id: string }
         Returns: Json
       }
+      admin_add_api_key: {
+        Args: {
+          p_credit_limit?: number
+          p_key: string
+          p_label?: string
+          p_service: string
+        }
+        Returns: string
+      }
       bump_conversation: {
         Args: { p_conversation_id: string }
         Returns: undefined
@@ -6384,7 +6645,19 @@ export type Database = {
         Args: { profile_row: Database["public"]["Tables"]["profiles"]["Row"] }
         Returns: boolean
       }
+      check_rate_limit: {
+        Args: {
+          p_block_seconds?: number
+          p_bucket: string
+          p_ip_hash: string
+          p_per_hour?: number
+          p_per_minute?: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       cleanup_old_research_reports: { Args: never; Returns: undefined }
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       clone_build_template: {
         Args: { _new_project_id: string; _template_id: string }
         Returns: number
@@ -6434,6 +6707,7 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: number
       }
+      has_unlimited_plan: { Args: { p_user_id: string }; Returns: boolean }
       is_conversation_member: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: boolean
@@ -6470,6 +6744,13 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: boolean
       }
+      pick_api_key: {
+        Args: { p_service: string }
+        Returns: {
+          api_key: string
+          id: string
+        }[]
+      }
       process_polar_order: {
         Args: {
           p_credits: number
@@ -6479,6 +6760,16 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      record_api_key_usage: {
+        Args: {
+          p_cost_usd?: number
+          p_error?: string
+          p_id: string
+          p_ok?: boolean
+          p_status_code?: number
+        }
+        Returns: undefined
       }
       search_attachment_chunks: {
         Args: {
