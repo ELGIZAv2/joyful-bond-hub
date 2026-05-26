@@ -73,6 +73,10 @@ const AgentsOnboarding = ({ alwaysShow = false, activeAgentId = null, onAgentTog
 
   useEffect(() => {
     if (alwaysShow) return;
+    // Per-session gate — show only once per browser session, not on every chat open.
+    try {
+      if (sessionStorage.getItem("megsy_agents_onboarding_shown") === "1") return;
+    } catch { /* ignore */ }
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
