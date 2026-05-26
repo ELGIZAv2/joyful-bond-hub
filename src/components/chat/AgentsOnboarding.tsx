@@ -99,6 +99,7 @@ const AgentsOnboarding = ({ alwaysShow = false, activeAgentId = null, onAgentTog
   }, [phase]);
 
   const finish = () => {
+    try { sessionStorage.setItem("megsy_agents_onboarding_shown", "1"); } catch { /* ignore */ }
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
